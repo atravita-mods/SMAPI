@@ -7,6 +7,8 @@
 * For mod authors:
   * Added a new `IRawTextureData` asset type.  
     _You can now load image files through `helper.ModContent` as `IRawTextureData` instead of `Texture2D`. This provides the image size and raw pixel data, which you can pass into other SMAPI APIs like `asset.AsImage().PatchImage`. This is much more efficient when you don't need a full `Texture2D` instance, since it bypasses the GPU operations needed to create one._
+  * Updated to Harmony 2.2.1 (see what's new in [2.2.0](https://github.com/pardeike/Harmony/releases/tag/v2.2.0.0) and [2.2.1](https://github.com/pardeike/Harmony/releases/tag/v2.2.1.0)).
+  * Updated dependencies (MonoMod.Common 21.6.21.1 → 22.3.5.1).
   * Removed transitional `UsePintail` option added in 3.14.0 (now always enabled).
 
 ## 3.14.6

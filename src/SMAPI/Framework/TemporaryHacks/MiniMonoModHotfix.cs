@@ -27,15 +27,6 @@ namespace MonoMod.Utils
         private static readonly object[] _NoArgs = Array.Empty<object>();
         private static readonly object?[] _CacheGetterArgs = { /* MemberListType.All */ 0, /* name apparently always null? */ null };
 
-        private static readonly Type? t_RuntimeModule =
-            typeof(Module).Assembly
-            .GetType("System.Reflection.RuntimeModule");
-
-        private static readonly PropertyInfo? p_RuntimeModule_RuntimeType =
-            typeof(Module).Assembly
-            .GetType("System.Reflection.RuntimeModule")
-            ?.GetProperty("RuntimeType", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-
         private static readonly Type? t_RuntimeType =
             typeof(Type).Assembly
             .GetType("System.RuntimeType");
@@ -107,22 +98,6 @@ namespace MonoMod.Utils
                     }
                 }
             }
-        }
-
-        public static Type? GetModuleType(this Module? module)
-        {
-            // Sadly we can't blindly resolve type 0x02000001 as the runtime throws ArgumentException.
-
-            if (module == null || t_RuntimeModule == null || !t_RuntimeModule.IsInstanceOfType(module))
-                return null;
-
-            // .NET
-            if (p_RuntimeModule_RuntimeType != null)
-                return (Type?)p_RuntimeModule_RuntimeType.GetValue(module, _NoArgs);
-
-            // The hotfix doesn't apply to Mono anyway, thus that's not copied over.
-
-            return null;
         }
 
         public static Type? GetRealDeclaringType(this MemberInfo member)
