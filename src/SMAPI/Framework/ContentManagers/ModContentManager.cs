@@ -86,8 +86,9 @@ namespace StardewModdingAPI.Framework.ContentManagers
             // cause changes to an asset through one content manager affecting the same asset in
             // others (or even fresh content managers). See https://www.patreon.com/posts/27247161
             // for more background info.
-            if (useCache)
-                throw new InvalidOperationException("Mod content managers don't support asset caching.");
+            //if (useCache)
+            //    throw new InvalidOperationException("Mod content managers don't support asset caching.");
+            useCache = true;
 
             // resolve managed asset key
             {
@@ -98,6 +99,10 @@ namespace StardewModdingAPI.Framework.ContentManagers
                     assetName = relativePath;
                 }
             }
+
+            // get cached value
+            if (useCache && this.IsLoaded(assetName))
+                return this.RawLoad<T>(assetName, useCache: true);
 
             // get local asset
             this.Monitor.Log($"[{nameof(ModContentManager)} {this.Name}] Loading {assetName}...", LogLevel.Warn);
@@ -126,7 +131,7 @@ namespace StardewModdingAPI.Framework.ContentManagers
             }
 
             // track & return asset
-            this.TrackAsset(assetName, asset, useCache: false);
+            this.TrackAsset(assetName, asset, useCache: true);
             return asset;
         }
 
@@ -224,7 +229,7 @@ namespace StardewModdingAPI.Framework.ContentManagers
                 : assetName;
 
             // load asset
-            T asset = this.RawLoad<T>(loadName, useCache: false);
+            T asset = this.RawLoad<T>(loadName, useCache: true);
             if (asset is Map map)
             {
                 map.assetPath = loadName.Name;

@@ -54,7 +54,7 @@ namespace StardewModdingAPI.Framework.ModHelpers
 
             try
             {
-                return this.ModContentManager.LoadExact<T>(assetName, useCache: false);
+                return this.ModContentManager.LoadExact<T>(assetName, useCache: true);
             }
             catch (Exception ex) when (ex is not SContentLoadException)
             {

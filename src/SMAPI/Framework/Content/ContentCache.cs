@@ -50,7 +50,7 @@ namespace StardewModdingAPI.Framework.Content
         ****/
         /// <summary>Get whether the cache contains a given key.</summary>
         /// <param name="key">The cache key.</param>
-        public bool ContainsKey(string key)
+        public bool ContainsKey(string key) // TODO: TryGetValue and check if !disposed?
         {
             return this.Cache.ContainsKey(key);
         }
