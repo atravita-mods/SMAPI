@@ -109,6 +109,7 @@ namespace StardewModdingAPI.Framework.ContentManagers
             }
 
             // load asset
+            this.Monitor.Log($"[{nameof(GameContentManager)} {this.Name}] Loading {assetName}...", LogLevel.Alert);
             T data;
             if (this.AssetsBeingLoaded.Contains(assetName.Name))
             {

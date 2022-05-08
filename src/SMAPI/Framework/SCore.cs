@@ -949,7 +949,10 @@ namespace StardewModdingAPI.Framework
 
                         // raise time changed
                         if (raiseWorldEvents && state.Time.IsChanged)
+                        {
+                            this.Monitor.Log($"Time changed to {Game1.timeOfDay}", LogLevel.Alert);
                             events.TimeChanged.Raise(new TimeChangedEventArgs(state.Time.Old, state.Time.New));
+                        }
 
                         // raise player events
                         if (raiseWorldEvents)

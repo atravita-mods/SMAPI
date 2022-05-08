@@ -100,6 +100,7 @@ namespace StardewModdingAPI.Framework.ContentManagers
             }
 
             // get local asset
+            this.Monitor.Log($"[{nameof(ModContentManager)} {this.Name}] Loading {assetName}...", LogLevel.Warn);
             T asset;
             try
             {
