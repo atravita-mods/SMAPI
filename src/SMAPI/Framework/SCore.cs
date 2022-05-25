@@ -1299,7 +1299,8 @@ namespace StardewModdingAPI.Framework
                     onAssetLoaded: this.OnAssetLoaded,
                     onAssetsInvalidated: this.OnAssetsInvalidated,
                     getFileLookup: this.GetFileLookup,
-                    requestAssetOperations: this.RequestAssetOperations
+                    requestAssetOperations: this.RequestAssetOperations,
+                    useExperimentalImageLoading: this.Settings.UseExperimentalImageLoading
                 );
                 if (this.ContentCore.Language != this.Translator.LocaleEnum)
                     this.Translator.SetLocale(this.ContentCore.GetLocale(), this.ContentCore.Language);

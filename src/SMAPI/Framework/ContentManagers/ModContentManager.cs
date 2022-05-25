@@ -7,6 +7,7 @@ using BmFont;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using SkiaSharp;
 using StardewModdingAPI.Framework.Exceptions;
 using StardewModdingAPI.Framework.Reflection;
 using StardewModdingAPI.Toolkit.Serialization;
@@ -25,6 +26,9 @@ namespace StardewModdingAPI.Framework.ContentManagers
         /*********
         ** Fields
         *********/
+        /// <summary>Whether to use a newer approach when loading image files from mod folder which may be faster.</summary>
+        private readonly bool UseExperimentalImageLoading;
+
         /// <summary>Encapsulates SMAPI's JSON file parsing.</summary>
         private readonly JsonHelper JsonHelper;
 
@@ -57,13 +61,15 @@ namespace StardewModdingAPI.Framework.ContentManagers
         /// <param name="jsonHelper">Encapsulates SMAPI's JSON file parsing.</param>
         /// <param name="onDisposing">A callback to invoke when the content manager is being disposed.</param>
         /// <param name="fileLookup">A lookup for files within the <paramref name="rootDirectory"/>.</param>
-        public ModContentManager(string name, IContentManager gameContentManager, IServiceProvider serviceProvider, string modName, string rootDirectory, CultureInfo currentCulture, ContentCoordinator coordinator, IMonitor monitor, Reflector reflection, JsonHelper jsonHelper, Action<BaseContentManager> onDisposing, IFileLookup fileLookup)
+        /// <param name="useExperimentalImageLoading">Whether to use a newer approach when loading image files from mod folder which may be faster.</param>
+        public ModContentManager(string name, IContentManager gameContentManager, IServiceProvider serviceProvider, string modName, string rootDirectory, CultureInfo currentCulture, ContentCoordinator coordinator, IMonitor monitor, Reflector reflection, JsonHelper jsonHelper, Action<BaseContentManager> onDisposing, IFileLookup fileLookup, bool useExperimentalImageLoading)
             : base(name, serviceProvider, rootDirectory, currentCulture, coordinator, monitor, reflection, onDisposing, isNamespaced: true)
         {
             this.GameContentManager = gameContentManager;
             this.FileLookup = fileLookup;
             this.JsonHelper = jsonHelper;
             this.ModName = modName;
+            this.UseExperimentalImageLoading = useExperimentalImageLoading;
 
             this.TryLocalizeKeys = false;
         }
@@ -187,10 +193,35 @@ namespace StardewModdingAPI.Framework.ContentManagers
                 throw this.GetLoadError(assetName, ContentLoadErrorType.InvalidData, $"can't read file with extension '{file.Extension}' as type '{typeof(T)}'; must be type '{typeof(Texture2D)}'.");
 
             // load
-            using FileStream stream = File.OpenRead(file.FullName);
-            Texture2D texture = Texture2D.FromStream(Game1.graphics.GraphicsDevice, stream);
-            texture = this.PremultiplyTransparency(texture);
-            return (T)(object)texture;
+            if (this.UseExperimentalImageLoading)
+            {
+                // load raw data
+                using FileStream stream = File.OpenRead(file.FullName);
+                using SKBitmap bitmap = SKBitmap.Decode(stream);
+                SKPMColor[] rawPixels = SKPMColor.PreMultiply(bitmap.Pixels);
+
+                // convert to XNA pixel format
+                Color[] pixels = new Color[rawPixels.Length];
+                for (int i = pixels.Length - 1; i >= 0; i--)
+                {
+                    SKPMColor pixel = rawPixels[i];
+                    pixels[i] = pixel.Alpha == 0
+                        ? Color.Transparent
+                        : new Color(r: pixel.Red, g: pixel.Green, b: pixel.Blue, alpha: pixel.Alpha);
+                }
+
+                // create texture
+                Texture2D texture = new(Game1.graphics.GraphicsDevice, bitmap.Width, bitmap.Height);
+                texture.SetData(pixels);
+                return (T)(object)texture;
+            }
+            else
+            {
+                using FileStream stream = File.OpenRead(file.FullName);
+                Texture2D texture = Texture2D.FromStream(Game1.graphics.GraphicsDevice, stream);
+                texture = this.PremultiplyTransparency(texture);
+                return (T)(object)texture;
+            }
         }
 
         /// <summary>Load an unpacked image file (<c>.tbin</c> or <c>.tmx</c>).</summary>

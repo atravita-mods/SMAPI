@@ -32,6 +32,9 @@ namespace StardewModdingAPI.Framework
         /// <summary>An asset key prefix for assets from SMAPI mod folders.</summary>
         private readonly string ManagedPrefix = "SMAPI";
 
+        /// <summary>Whether to use a newer approach when loading image files from mod folder which may be faster.</summary>
+        private readonly bool UseExperimentalImageLoading;
+
         /// <summary>Get a file lookup for the given directory.</summary>
         private readonly Func<string, IFileLookup> GetFileLookup;
 
@@ -130,7 +133,8 @@ namespace StardewModdingAPI.Framework
         /// <param name="getFileLookup">Get a file lookup for the given directory.</param>
         /// <param name="onAssetsInvalidated">A callback to invoke when any asset names have been invalidated from the cache.</param>
         /// <param name="requestAssetOperations">Get the load/edit operations to apply to an asset by querying registered <see cref="IContentEvents.AssetRequested"/> event handlers.</param>
-        public ContentCoordinator(IServiceProvider serviceProvider, string rootDirectory, CultureInfo currentCulture, IMonitor monitor, Reflector reflection, JsonHelper jsonHelper, Action onLoadingFirstAsset, Action<BaseContentManager, IAssetName> onAssetLoaded, Func<string, IFileLookup> getFileLookup, Action<IList<IAssetName>> onAssetsInvalidated, Func<IAssetInfo, AssetOperationGroup?> requestAssetOperations)
+        /// <param name="useExperimentalImageLoading">Whether to use a newer approach when loading image files from mod folder which may be faster.</param>
+        public ContentCoordinator(IServiceProvider serviceProvider, string rootDirectory, CultureInfo currentCulture, IMonitor monitor, Reflector reflection, JsonHelper jsonHelper, Action onLoadingFirstAsset, Action<BaseContentManager, IAssetName> onAssetLoaded, Func<string, IFileLookup> getFileLookup, Action<IList<IAssetName>> onAssetsInvalidated, Func<IAssetInfo, AssetOperationGroup?> requestAssetOperations, bool useExperimentalImageLoading)
         {
             this.GetFileLookup = getFileLookup;
             this.Monitor = monitor ?? throw new ArgumentNullException(nameof(monitor));
@@ -141,6 +145,7 @@ namespace StardewModdingAPI.Framework
             this.OnAssetsInvalidated = onAssetsInvalidated;
             this.RequestAssetOperations = requestAssetOperations;
             this.FullRootDirectory = Path.Combine(Constants.GamePath, rootDirectory);
+            this.UseExperimentalImageLoading = useExperimentalImageLoading;
             this.ContentManagers.Add(
                 this.MainContentManager = new GameContentManager(
                     name: "Game1.content",
@@ -219,7 +224,8 @@ namespace StardewModdingAPI.Framework
                     reflection: this.Reflection,
                     jsonHelper: this.JsonHelper,
                     onDisposing: this.OnDisposing,
-                    fileLookup: this.GetFileLookup(rootDirectory)
+                    fileLookup: this.GetFileLookup(rootDirectory),
+                    useExperimentalImageLoading: this.UseExperimentalImageLoading
                 );
                 this.ContentManagers.Add(manager);
                 return manager;

@@ -1,6 +1,11 @@
 ← [README](README.md)
 
 # Release notes
+## Upcoming release
+* For players:
+  * Added experimental image load rewrite (disabled by default).  
+    _If you have many content mods installed, enabling `UseExperimentalImageLoading` in `smapi-internal/config.json` may reduce load times or stutters when they load many image files at once._
+
 ## 3.14.6
 Released 27 May 2022 for Stardew Valley 1.5.6 or later.
 

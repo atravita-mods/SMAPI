@@ -53,6 +53,11 @@ copy all the settings, or you may cause bugs due to overridden changes in future
     "UsePintail": true,
 
     /**
+     * Whether to use a newer approach when loading image files from mod folder which may be faster.
+     */
+    "UseExperimentalImageLoading": false,
+
+    /**
      * Whether to add a section to the 'mod issues' list for mods which directly use potentially
      * sensitive .NET APIs like file or shell access. Note that many mods do this legitimately as
      * part of their normal functionality, so these warnings are meaningless without further
