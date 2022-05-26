@@ -258,6 +258,9 @@ namespace StardewModdingAPI.Framework.ContentManagers
         /// <param name="assetName">The asset name relative to the loader root directory.</param>
         private T LoadXnbFile<T>(IAssetName assetName)
         {
+            if (typeof(T) == typeof(IRawTextureData))
+                throw this.GetLoadError(assetName, ContentLoadErrorType.Other, $"can't read XNB file as type {typeof(IRawTextureData)}; that type can only be read from a PNG file.");
+
             // the underlying content manager adds a .xnb extension implicitly, so
             // we need to strip it here to avoid trying to load a '.xnb.xnb' file.
             IAssetName loadName = assetName.Name.EndsWith(".xnb", StringComparison.OrdinalIgnoreCase)
