@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using SkiaSharp;
+using StardewModdingAPI.Framework.Content;
 using StardewModdingAPI.Framework.Exceptions;
 using StardewModdingAPI.Framework.Reflection;
 using StardewModdingAPI.Toolkit.Serialization;
@@ -188,12 +189,17 @@ namespace StardewModdingAPI.Framework.ContentManagers
         /// <param name="file">The file to load.</param>
         private T LoadImageFile<T>(IAssetName assetName, FileInfo file)
         {
-            // validate
+            // validate type
+            bool asRawData = false;
             if (typeof(T) != typeof(Texture2D))
-                throw this.GetLoadError(assetName, ContentLoadErrorType.InvalidData, $"can't read file with extension '{file.Extension}' as type '{typeof(T)}'; must be type '{typeof(Texture2D)}'.");
+            {
+                asRawData = typeof(T) == typeof(IRawTextureData);
+                if (!asRawData)
+                    throw this.GetLoadError(assetName, ContentLoadErrorType.InvalidData, $"can't read file with extension '{file.Extension}' as type '{typeof(T)}'; must be type '{typeof(Texture2D)}' or '{typeof(IRawTextureData)}'.");
+            }
 
             // load
-            if (this.UseExperimentalImageLoading)
+            if (asRawData || this.UseExperimentalImageLoading)
             {
                 // load raw data
                 using FileStream stream = File.OpenRead(file.FullName);
@@ -211,9 +217,14 @@ namespace StardewModdingAPI.Framework.ContentManagers
                 }
 
                 // create texture
-                Texture2D texture = new(Game1.graphics.GraphicsDevice, bitmap.Width, bitmap.Height);
-                texture.SetData(pixels);
-                return (T)(object)texture;
+                if (asRawData)
+                    return (T)(object)new RawTextureData(bitmap.Width, bitmap.Height, pixels);
+                else
+                {
+                    Texture2D texture = new(Game1.graphics.GraphicsDevice, bitmap.Width, bitmap.Height);
+                    texture.SetData(pixels);
+                    return (T)(object)texture;
+                }
             }
             else
             {

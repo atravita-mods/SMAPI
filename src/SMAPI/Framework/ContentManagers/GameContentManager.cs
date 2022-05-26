@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Framework.Content;
 using StardewModdingAPI.Framework.Deprecations;
+using StardewModdingAPI.Framework.Exceptions;
 using StardewModdingAPI.Framework.Reflection;
 using StardewModdingAPI.Framework.Utilities;
 using StardewModdingAPI.Internal;
@@ -93,6 +94,9 @@ namespace StardewModdingAPI.Framework.ContentManagers
         /// <inheritdoc />
         public override T LoadExact<T>(IAssetName assetName, bool useCache)
         {
+            if (typeof(IRawTextureData).IsAssignableFrom(typeof(T)))
+                throw new SContentLoadException(ContentLoadErrorType.Other, $"Can't load {nameof(IRawTextureData)} assets from the game content pipeline. This asset type is only available for mod files.");
+
             // raise first-load callback
             if (GameContentManager.IsFirstLoad)
             {

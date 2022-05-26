@@ -35,7 +35,7 @@ namespace StardewModdingAPI
         ** Public methods
         *********/
         /// <summary>Load content from the game folder or mod folder (if not already cached), and return it. When loading a <c>.png</c> file, this must be called outside the game's draw loop.</summary>
-        /// <typeparam name="T">The expected data type. The main supported types are <see cref="Map"/>, <see cref="Texture2D"/>, dictionaries, and lists; other types may be supported by the game's content pipeline.</typeparam>
+        /// <typeparam name="T">The expected data type. The main supported types are <see cref="Map"/>, <see cref="Texture2D"/>, <see cref="IRawTextureData"/> (for mod content only), and data structures; other types may be supported by the game's content pipeline.</typeparam>
         /// <param name="key">The asset key to fetch (if the <paramref name="source"/> is <see cref="ContentSource.GameContent"/>), or the local path to a content file relative to the mod folder.</param>
         /// <param name="source">Where to search for a matching content asset.</param>
         /// <exception cref="ArgumentException">The <paramref name="key"/> is empty or contains invalid characters.</exception>
