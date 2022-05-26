@@ -3,11 +3,10 @@
 # Release notes
 ## Upcoming release
 * For players:
-  * Added experimental image load rewrite (disabled by default).  
-    _If you have many content mods installed, enabling `UseExperimentalImageLoading` in `smapi-internal/config.json` may reduce load times or stutters when they load many image files at once._
+  * Optimized mod image file loading.
 * For mod authors:
-  * Added specialized `IRawTextureData` asset type.  
-    _When you're only loading a mod file to patch it into an asset, you can now load it using `helper.ModContent.Load<IRawTextureData>(path)`. This reads the image data from disk without initializing a `Texture2D` instance through the GPU. You can then pass this to SMAPI APIs that accept `Texture2D` instances._
+  * Added a new `IRawTextureData` asset type.  
+    _You can now load image files through `helper.ModContent` as `IRawTextureData` instead of `Texture2D`. This provides the image size and raw pixel data, which you can pass into other SMAPI APIs like `asset.AsImage().PatchImage`. This is much more efficient when you don't need a full `Texture2D` instance, since it bypasses the GPU operations needed to create one._
 
 ## 3.14.6
 Released 27 May 2022 for Stardew Valley 1.5.6 or later.

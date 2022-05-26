@@ -27,8 +27,8 @@ namespace StardewModdingAPI.Framework.ContentManagers
         /*********
         ** Fields
         *********/
-        /// <summary>Whether to use a newer approach when loading image files from mod folder which may be faster.</summary>
-        private readonly bool UseExperimentalImageLoading;
+        /// <summary>Whether to use raw image data when possible, instead of initializing an XNA Texture2D instance through the GPU.</summary>
+        private readonly bool UseRawImageLoading;
 
         /// <summary>Encapsulates SMAPI's JSON file parsing.</summary>
         private readonly JsonHelper JsonHelper;
@@ -62,15 +62,15 @@ namespace StardewModdingAPI.Framework.ContentManagers
         /// <param name="jsonHelper">Encapsulates SMAPI's JSON file parsing.</param>
         /// <param name="onDisposing">A callback to invoke when the content manager is being disposed.</param>
         /// <param name="fileLookup">A lookup for files within the <paramref name="rootDirectory"/>.</param>
-        /// <param name="useExperimentalImageLoading">Whether to use a newer approach when loading image files from mod folder which may be faster.</param>
-        public ModContentManager(string name, IContentManager gameContentManager, IServiceProvider serviceProvider, string modName, string rootDirectory, CultureInfo currentCulture, ContentCoordinator coordinator, IMonitor monitor, Reflector reflection, JsonHelper jsonHelper, Action<BaseContentManager> onDisposing, IFileLookup fileLookup, bool useExperimentalImageLoading)
+        /// <param name="useRawImageLoading">Whether to use raw image data when possible, instead of initializing an XNA Texture2D instance through the GPU.</param>
+        public ModContentManager(string name, IContentManager gameContentManager, IServiceProvider serviceProvider, string modName, string rootDirectory, CultureInfo currentCulture, ContentCoordinator coordinator, IMonitor monitor, Reflector reflection, JsonHelper jsonHelper, Action<BaseContentManager> onDisposing, IFileLookup fileLookup, bool useRawImageLoading)
             : base(name, serviceProvider, rootDirectory, currentCulture, coordinator, monitor, reflection, onDisposing, isNamespaced: true)
         {
             this.GameContentManager = gameContentManager;
             this.FileLookup = fileLookup;
             this.JsonHelper = jsonHelper;
             this.ModName = modName;
-            this.UseExperimentalImageLoading = useExperimentalImageLoading;
+            this.UseRawImageLoading = useRawImageLoading;
 
             this.TryLocalizeKeys = false;
         }
@@ -199,7 +199,7 @@ namespace StardewModdingAPI.Framework.ContentManagers
             }
 
             // load
-            if (asRawData || this.UseExperimentalImageLoading)
+            if (asRawData || this.UseRawImageLoading)
             {
                 // load raw data
                 using FileStream stream = File.OpenRead(file.FullName);

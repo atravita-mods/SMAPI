@@ -24,7 +24,7 @@ namespace StardewModdingAPI.Framework.Models
             [nameof(LogNetworkTraffic)] = false,
             [nameof(RewriteMods)] = true,
             [nameof(UsePintail)] = true,
-            [nameof(UseExperimentalImageLoading)] = false,
+            [nameof(UseRawImageLoading)] = true,
             [nameof(UseCaseInsensitivePaths)] = Constants.Platform is Platform.Android or Platform.Linux
         };
 
@@ -67,8 +67,8 @@ namespace StardewModdingAPI.Framework.Models
         /// <summary>Whether to use the experimental Pintail API proxying library, instead of the original proxying built into SMAPI itself.</summary>
         public bool UsePintail { get; }
 
-        /// <summary>Whether to use a newer approach when loading image files from mod folder which may be faster.</summary>
-        public bool UseExperimentalImageLoading { get; }
+        /// <summary>Whether to use raw image data when possible, instead of initializing an XNA Texture2D instance through the GPU.</summary>
+        public bool UseRawImageLoading { get; }
 
         /// <summary>Whether to make SMAPI file APIs case-insensitive, even on Linux.</summary>
         public bool UseCaseInsensitivePaths { get; }
@@ -96,12 +96,12 @@ namespace StardewModdingAPI.Framework.Models
         /// <param name="verboseLogging">Whether SMAPI should log more information about the game context.</param>
         /// <param name="rewriteMods">Whether SMAPI should rewrite mods for compatibility.</param>
         /// <param name="usePintail">Whether to use the experimental Pintail API proxying library, instead of the original proxying built into SMAPI itself.</param>
-        /// <param name="useExperimentalImageLoading">Whether to use a newer approach when loading image files from mod folder which may be faster.</param>
+        /// <param name="useRawImageLoading">Whether to use raw image data when possible, instead of initializing an XNA Texture2D instance through the GPU.</param>
         /// <param name="useCaseInsensitivePaths">>Whether to make SMAPI file APIs case-insensitive, even on Linux.</param>
         /// <param name="logNetworkTraffic">Whether SMAPI should log network traffic.</param>
         /// <param name="consoleColors">The colors to use for text written to the SMAPI console.</param>
         /// <param name="suppressUpdateChecks">The mod IDs SMAPI should ignore when performing update checks or validating update keys.</param>
-        public SConfig(bool developerMode, bool? checkForUpdates, bool? paranoidWarnings, bool? useBetaChannel, string gitHubProjectName, string webApiBaseUrl, bool? verboseLogging, bool? rewriteMods, bool? usePintail, bool? useExperimentalImageLoading, bool? useCaseInsensitivePaths, bool? logNetworkTraffic, ColorSchemeConfig consoleColors, string[]? suppressUpdateChecks)
+        public SConfig(bool developerMode, bool? checkForUpdates, bool? paranoidWarnings, bool? useBetaChannel, string gitHubProjectName, string webApiBaseUrl, bool? verboseLogging, bool? rewriteMods, bool? usePintail, bool? useRawImageLoading, bool? useCaseInsensitivePaths, bool? logNetworkTraffic, ColorSchemeConfig consoleColors, string[]? suppressUpdateChecks)
         {
             this.DeveloperMode = developerMode;
             this.CheckForUpdates = checkForUpdates ?? (bool)SConfig.DefaultValues[nameof(this.CheckForUpdates)];
@@ -112,7 +112,7 @@ namespace StardewModdingAPI.Framework.Models
             this.VerboseLogging = verboseLogging ?? (bool)SConfig.DefaultValues[nameof(this.VerboseLogging)];
             this.RewriteMods = rewriteMods ?? (bool)SConfig.DefaultValues[nameof(this.RewriteMods)];
             this.UsePintail = usePintail ?? (bool)SConfig.DefaultValues[nameof(this.UsePintail)];
-            this.UseExperimentalImageLoading = useExperimentalImageLoading ?? (bool)SConfig.DefaultValues[nameof(this.UseExperimentalImageLoading)];
+            this.UseRawImageLoading = useRawImageLoading ?? (bool)SConfig.DefaultValues[nameof(this.UseRawImageLoading)];
             this.UseCaseInsensitivePaths = useCaseInsensitivePaths ?? (bool)SConfig.DefaultValues[nameof(this.UseCaseInsensitivePaths)];
             this.LogNetworkTraffic = logNetworkTraffic ?? (bool)SConfig.DefaultValues[nameof(this.LogNetworkTraffic)];
             this.ConsoleColors = consoleColors;
