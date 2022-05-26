@@ -23,7 +23,6 @@ namespace StardewModdingAPI.Framework.Models
             [nameof(VerboseLogging)] = false,
             [nameof(LogNetworkTraffic)] = false,
             [nameof(RewriteMods)] = true,
-            [nameof(UsePintail)] = true,
             [nameof(UseRawImageLoading)] = true,
             [nameof(UseCaseInsensitivePaths)] = Constants.Platform is Platform.Android or Platform.Linux
         };
@@ -64,9 +63,6 @@ namespace StardewModdingAPI.Framework.Models
         /// <summary>Whether SMAPI should rewrite mods for compatibility.</summary>
         public bool RewriteMods { get; }
 
-        /// <summary>Whether to use the experimental Pintail API proxying library, instead of the original proxying built into SMAPI itself.</summary>
-        public bool UsePintail { get; }
-
         /// <summary>Whether to use raw image data when possible, instead of initializing an XNA Texture2D instance through the GPU.</summary>
         public bool UseRawImageLoading { get; }
 
@@ -95,7 +91,6 @@ namespace StardewModdingAPI.Framework.Models
         /// <param name="webApiBaseUrl">The base URL for SMAPI's web API, used to perform update checks.</param>
         /// <param name="verboseLogging">Whether SMAPI should log more information about the game context.</param>
         /// <param name="rewriteMods">Whether SMAPI should rewrite mods for compatibility.</param>
-        /// <param name="usePintail">Whether to use the experimental Pintail API proxying library, instead of the original proxying built into SMAPI itself.</param>
         /// <param name="useRawImageLoading">Whether to use raw image data when possible, instead of initializing an XNA Texture2D instance through the GPU.</param>
         /// <param name="useCaseInsensitivePaths">>Whether to make SMAPI file APIs case-insensitive, even on Linux.</param>
         /// <param name="logNetworkTraffic">Whether SMAPI should log network traffic.</param>
@@ -111,7 +106,6 @@ namespace StardewModdingAPI.Framework.Models
             this.WebApiBaseUrl = webApiBaseUrl;
             this.VerboseLogging = verboseLogging ?? (bool)SConfig.DefaultValues[nameof(this.VerboseLogging)];
             this.RewriteMods = rewriteMods ?? (bool)SConfig.DefaultValues[nameof(this.RewriteMods)];
-            this.UsePintail = usePintail ?? (bool)SConfig.DefaultValues[nameof(this.UsePintail)];
             this.UseRawImageLoading = useRawImageLoading ?? (bool)SConfig.DefaultValues[nameof(this.UseRawImageLoading)];
             this.UseCaseInsensitivePaths = useCaseInsensitivePaths ?? (bool)SConfig.DefaultValues[nameof(this.UseCaseInsensitivePaths)];
             this.LogNetworkTraffic = logNetworkTraffic ?? (bool)SConfig.DefaultValues[nameof(this.LogNetworkTraffic)];

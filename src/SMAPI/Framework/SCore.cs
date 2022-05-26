@@ -1608,9 +1608,7 @@ namespace StardewModdingAPI.Framework
             {
                 // init
                 HashSet<string> suppressUpdateChecks = new HashSet<string>(this.Settings.SuppressUpdateChecks, StringComparer.OrdinalIgnoreCase);
-                IInterfaceProxyFactory proxyFactory = this.Settings.UsePintail
-                    ? new InterfaceProxyFactory()
-                    : new OriginalInterfaceProxyFactory();
+                IInterfaceProxyFactory proxyFactory = new InterfaceProxyFactory();
 
                 // load mods
                 foreach (IModMetadata mod in mods)

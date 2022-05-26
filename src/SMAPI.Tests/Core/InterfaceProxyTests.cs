@@ -29,11 +29,8 @@ namespace SMAPI.Tests.Core
         /// <summary>The random number generator with which to create sample values.</summary>
         private readonly Random Random = new();
 
-        /// <summary>Sample user inputs for season names.</summary>
-        private static readonly IInterfaceProxyFactory[] ProxyFactories = {
-            new InterfaceProxyFactory(),
-            new OriginalInterfaceProxyFactory()
-        };
+        /// <summary>The proxy factory to use in unit tests.</summary>
+        private static readonly IInterfaceProxyFactory[] ProxyFactories = { new InterfaceProxyFactory() };
 
 
         /*********
