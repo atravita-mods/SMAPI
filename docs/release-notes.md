@@ -2,6 +2,8 @@
 
 # Release notes
 ## Upcoming release
+See [release highlights](https://www.patreon.com/posts/66986798).
+
 * For players:
   * Optimized mod image file loading.
 * For mod authors:
