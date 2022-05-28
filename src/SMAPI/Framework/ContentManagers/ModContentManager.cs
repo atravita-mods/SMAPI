@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -201,27 +202,13 @@ namespace StardewModdingAPI.Framework.ContentManagers
             // load
             if (asRawData || this.UseRawImageLoading)
             {
-                // load raw data
-                using FileStream stream = File.OpenRead(file.FullName);
-                using SKBitmap bitmap = SKBitmap.Decode(stream);
-                SKPMColor[] rawPixels = SKPMColor.PreMultiply(bitmap.Pixels);
+                this.LoadRawImageData(file, out int width, out int height, out Color[] pixels, asRawData);
 
-                // convert to XNA pixel format
-                Color[] pixels = new Color[rawPixels.Length];
-                for (int i = pixels.Length - 1; i >= 0; i--)
-                {
-                    SKPMColor pixel = rawPixels[i];
-                    pixels[i] = pixel.Alpha == 0
-                        ? Color.Transparent
-                        : new Color(r: pixel.Red, g: pixel.Green, b: pixel.Blue, alpha: pixel.Alpha);
-                }
-
-                // create texture
                 if (asRawData)
-                    return (T)(object)new RawTextureData(bitmap.Width, bitmap.Height, pixels);
+                    return (T)(object)new RawTextureData(width, height, pixels);
                 else
                 {
-                    Texture2D texture = new(Game1.graphics.GraphicsDevice, bitmap.Width, bitmap.Height);
+                    Texture2D texture = new(Game1.graphics.GraphicsDevice, width, height);
                     texture.SetData(pixels);
                     return (T)(object)texture;
                 }
@@ -232,6 +219,38 @@ namespace StardewModdingAPI.Framework.ContentManagers
                 Texture2D texture = Texture2D.FromStream(Game1.graphics.GraphicsDevice, stream);
                 texture = this.PremultiplyTransparency(texture);
                 return (T)(object)texture;
+            }
+        }
+
+        /// <summary>Load the raw image data from a file on disk.</summary>
+        /// <param name="file">The file whose data to load.</param>
+        /// <param name="width">The pixel width for the loaded image data.</param>
+        /// <param name="height">The pixel height for the loaded image data.</param>
+        /// <param name="pixels">The premultiplied pixel data.</param>
+        /// <param name="forRawData">Whether the data is being loaded for an <see cref="IRawTextureData"/> (true) or <see cref="Texture2D"/> (false) instance.</param>
+        /// <remarks>This is separate to let framework mods intercept the data before it's loaded, if needed.</remarks>
+        [SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "The 'forRawData' parameter is only added for mods which may intercept this method.")]
+        [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "The 'forRawData' parameter is only added for mods which may intercept this method.")]
+        private void LoadRawImageData(FileInfo file, out int width, out int height, out Color[] pixels, bool forRawData)
+        {
+            // load raw data
+            SKPMColor[] rawPixels;
+            {
+                using FileStream stream = File.OpenRead(file.FullName);
+                using SKBitmap bitmap = SKBitmap.Decode(stream);
+                rawPixels = SKPMColor.PreMultiply(bitmap.Pixels);
+                width = bitmap.Width;
+                height = bitmap.Height;
+            }
+
+            // convert to XNA pixel format
+            pixels = new Color[rawPixels.Length];
+            for (int i = pixels.Length - 1; i >= 0; i--)
+            {
+                SKPMColor pixel = rawPixels[i];
+                pixels[i] = pixel.Alpha == 0
+                    ? Color.Transparent
+                    : new Color(r: pixel.Red, g: pixel.Green, b: pixel.Blue, alpha: pixel.Alpha);
             }
         }
 
