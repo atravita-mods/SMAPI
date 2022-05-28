@@ -245,7 +245,7 @@ namespace StardewModdingAPI.Framework.ContentManagers
 
             // convert to XNA pixel format
             pixels = new Color[rawPixels.Length];
-            for (int i = pixels.Length - 1; i >= 0; i--)
+            for (int i = 0; i < pixels.Length; i++)
             {
                 SKPMColor pixel = rawPixels[i];
                 pixels[i] = pixel.Alpha == 0
