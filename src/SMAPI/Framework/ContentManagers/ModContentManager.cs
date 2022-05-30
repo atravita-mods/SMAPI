@@ -162,57 +162,14 @@ namespace StardewModdingAPI.Framework.ContentManagers
         /*********
         ** Private methods
         *********/
-        /// <summary>Validates that the provided <typeparamref name="TInput">type</typeparamref> is compatible with <typeparamref name="TExpected"/>.</summary>
-        /// <typeparam name="TInput">Type to validate compatibility of.</typeparam>
-        /// <typeparam name="TExpected">Type to validate compatibility against.</typeparam>
-        /// <param name="assetName">The asset name relative to the loader root directory.</param>
-        /// <param name="file">The file being loaded.</param>
-        /// <param name="exception">The exception to throw if the type validation fails, otherwise <see langword="null"/>.</param>
-        /// <returns><see langword="true"/> if the type validation succeeds, otherwise <see langword="false"/></returns>
-        private bool ValidateType<TInput, TExpected>(IAssetName assetName, FileInfo file, [NotNullWhen(false)] out SContentLoadException? exception)
-        {
-            if (typeof(TInput).IsAssignableFrom(typeof(TExpected)))
-            {
-                exception = null;
-                return true;
-            }
-
-            exception = this.GetLoadError(assetName, ContentLoadErrorType.InvalidData, $"can't read file with extension '{file.Extension}' as type '{typeof(TInput)}'; must be type '{typeof(TExpected)}'.");
-            return false;
-        }
-
-        /// <summary>Validates that the provided <typeparamref name="TInput">type</typeparamref> is compatible with <typeparamref name="TExpected0"/> or <typeparamref name="TExpected1"/>.</summary>
-        /// <typeparam name="TInput">Type to validate compatibility of.</typeparam>
-        /// <typeparam name="TExpected0">First type to validate compatibility against.</typeparam>
-        /// /// <typeparam name="TExpected1">Second type to validate compatibility against.</typeparam>
-        /// <param name="assetName">The asset name relative to the loader root directory.</param>
-        /// <param name="file">The file being loaded.</param>
-        /// <param name="exception">The exception to throw if the type validation fails, otherwise <see langword="null"/>.</param>
-        /// <returns><see langword="true"/> if the type validation succeeds, otherwise <see langword="false"/></returns>
-        private bool ValidateType<TInput, TExpected0, TExpected1>(IAssetName assetName, FileInfo file, [NotNullWhen(false)] out SContentLoadException? exception)
-        {
-            if (typeof(TInput).IsAssignableFrom(typeof(TExpected0)) || typeof(TInput).IsAssignableFrom(typeof(TExpected1)))
-            {
-                exception = null;
-                return true;
-            }
-
-            exception = this.GetLoadError(assetName, ContentLoadErrorType.InvalidData, $"can't read file with extension '{file.Extension}' as type '{typeof(TInput)}'; must be type '{typeof(TExpected0)}' or '{typeof(TExpected1)}'.");
-            return false;
-        }
-
-
         /// <summary>Load an unpacked font file (<c>.fnt</c>).</summary>
         /// <typeparam name="T">The type of asset to load.</typeparam>
         /// <param name="assetName">The asset name relative to the loader root directory.</param>
         /// <param name="file">The file to load.</param>
         private T LoadFont<T>(IAssetName assetName, FileInfo file)
         {
-            // validate
-            if (!this.ValidateType<T, XmlSource>(assetName, file, out var exception))
-                throw exception;
+            this.AssertValidType<T>(assetName, file, typeof(XmlSource));
 
-            // load
             string source = File.ReadAllText(file.FullName);
             return (T)(object)new XmlSource(source);
         }
@@ -235,10 +192,7 @@ namespace StardewModdingAPI.Framework.ContentManagers
         /// <param name="file">The file to load.</param>
         private T LoadImageFile<T>(IAssetName assetName, FileInfo file)
         {
-            // validate type
-            if (!this.ValidateType<T, Texture2D, IRawTextureData>(assetName, file, out var exception))
-                throw exception;
-
+            this.AssertValidType<T>(assetName, file, typeof(Texture2D), typeof(IRawTextureData));
             bool asRawData = typeof(T).IsAssignableTo(typeof(IRawTextureData));
 
             // load
@@ -302,11 +256,8 @@ namespace StardewModdingAPI.Framework.ContentManagers
         /// <param name="file">The file to load.</param>
         private T LoadMapFile<T>(IAssetName assetName, FileInfo file)
         {
-            // validate
-            if (!this.ValidateType<T, Map>(assetName, file, out var exception))
-                throw exception;
+            this.AssertValidType<T>(assetName, file, typeof(Map));
 
-            // load
             FormatManager formatManager = FormatManager.Instance;
             Map map = formatManager.LoadMap(file.FullName);
             map.assetPath = assetName.Name;
@@ -346,6 +297,18 @@ namespace StardewModdingAPI.Framework.ContentManagers
         private T HandleUnknownFileType<T>(IAssetName assetName, FileInfo file)
         {
             throw this.GetLoadError(assetName, ContentLoadErrorType.InvalidName, $"unknown file extension '{file.Extension}'; must be one of '.fnt', '.json', '.png', '.tbin', '.tmx', or '.xnb'.");
+        }
+
+        /// <summary>Assert that the asset type is compatible with one of the allowed types.</summary>
+        /// <typeparam name="TAsset">The actual asset type.</typeparam>
+        /// <param name="assetName">The asset name relative to the loader root directory.</param>
+        /// <param name="file">The file being loaded.</param>
+        /// <param name="validTypes">The allowed asset types.</param>
+        /// <exception cref="SContentLoadException">The <typeparamref name="TAsset"/> is not compatible with any of the <paramref name="validTypes"/>.</exception>
+        private void AssertValidType<TAsset>(IAssetName assetName, FileInfo file, params Type[] validTypes)
+        {
+            if (!validTypes.Any(validType => validType.IsAssignableFrom(typeof(TAsset))))
+                throw this.GetLoadError(assetName, ContentLoadErrorType.InvalidData, $"can't read file with extension '{file.Extension}' as type '{typeof(TAsset)}'; must be type '{string.Join("' or '", validTypes.Select(p => p.FullName))}'.");
         }
 
         /// <summary>Get an error which indicates that an asset couldn't be loaded.</summary>
