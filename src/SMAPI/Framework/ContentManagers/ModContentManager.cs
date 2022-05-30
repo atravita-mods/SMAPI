@@ -1,11 +1,11 @@
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using BmFont;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using SkiaSharp;
@@ -19,7 +19,6 @@ using StardewValley;
 using xTile;
 using xTile.Format;
 using xTile.Tiles;
-using Color = Microsoft.Xna.Framework.Color;
 
 namespace StardewModdingAPI.Framework.ContentManagers
 {
@@ -198,14 +197,14 @@ namespace StardewModdingAPI.Framework.ContentManagers
             // load
             if (asRawData || this.UseRawImageLoading)
             {
-                (Size size, Color[] pixels) = this.LoadRawImageData(file, asRawData);
+                IRawTextureData raw = this.LoadRawImageData(file, asRawData);
 
                 if (asRawData)
-                    return (T)(object)new RawTextureData(size.Width, size.Height, pixels);
+                    return (T)raw;
                 else
                 {
-                    Texture2D texture = new(Game1.graphics.GraphicsDevice, size.Width, size.Height);
-                    texture.SetData(pixels);
+                    Texture2D texture = new(Game1.graphics.GraphicsDevice, raw.Width, raw.Height);
+                    texture.SetData(raw.Data);
                     return (T)(object)texture;
                 }
             }
@@ -224,17 +223,18 @@ namespace StardewModdingAPI.Framework.ContentManagers
         /// <remarks>This is separate to let framework mods intercept the data before it's loaded, if needed.</remarks>
         [SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "The 'forRawData' parameter is only added for mods which may intercept this method.")]
         [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "The 'forRawData' parameter is only added for mods which may intercept this method.")]
-        private (Size Size, Color[] Data) LoadRawImageData(FileInfo file, bool forRawData)
+        private IRawTextureData LoadRawImageData(FileInfo file, bool forRawData)
         {
-            Size size;
-
             // load raw data
+            int width;
+            int height;
             SKPMColor[] rawPixels;
             {
                 using FileStream stream = File.OpenRead(file.FullName);
                 using SKBitmap bitmap = SKBitmap.Decode(stream);
                 rawPixels = SKPMColor.PreMultiply(bitmap.Pixels);
-                size = new(bitmap.Width, bitmap.Height);
+                width = bitmap.Width;
+                height = bitmap.Height;
             }
 
             // convert to XNA pixel format
@@ -247,7 +247,7 @@ namespace StardewModdingAPI.Framework.ContentManagers
                     : new Color(r: pixel.Red, g: pixel.Green, b: pixel.Blue, alpha: pixel.Alpha);
             }
 
-            return (size, pixels);
+            return new RawTextureData(width, height, pixels);
         }
 
         /// <summary>Load an unpacked image file (<c>.tbin</c> or <c>.tmx</c>).</summary>
