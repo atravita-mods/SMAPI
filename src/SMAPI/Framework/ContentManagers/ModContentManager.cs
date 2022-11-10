@@ -259,6 +259,23 @@ namespace StardewModdingAPI.Framework.ContentManagers
             SKPMColor[] rawPixels;
             {
                 using FileStream stream = File.OpenRead(file.FullName);
+
+                // sanity check - assert that the first png header is intact.
+                byte[] buffer = new byte[8];
+
+                stream.Read(buffer, 0, buffer.Length);
+                stream.Seek(0, SeekOrigin.Begin);
+
+                byte[] png = new byte[] { 0x89, 0x50, 0x4e, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+
+                for (int i = 0; i < buffer.Length; i++)
+                {
+                    if (buffer[i] != png[i])
+                    {
+                        throw new InvalidDataException($"{file.FullName} is not a valid PNG - it has header {string.Join("", buffer.Select(x => x.ToString("X")))}");
+                    }
+                }
+
                 using SKBitmap bitmap = SKBitmap.Decode(stream);
 
                 if (bitmap is null)
