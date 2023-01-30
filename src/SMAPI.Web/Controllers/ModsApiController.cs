@@ -22,6 +22,7 @@ using StardewModdingAPI.Web.Framework.Clients.CurseForge;
 using StardewModdingAPI.Web.Framework.Clients.GitHub;
 using StardewModdingAPI.Web.Framework.Clients.ModDrop;
 using StardewModdingAPI.Web.Framework.Clients.Nexus;
+using StardewModdingAPI.Web.Framework.Clients.UpdateManifest;
 using StardewModdingAPI.Web.Framework.ConfigModels;
 
 namespace StardewModdingAPI.Web.Controllers
@@ -63,14 +64,15 @@ namespace StardewModdingAPI.Web.Controllers
         /// <param name="github">The GitHub API client.</param>
         /// <param name="modDrop">The ModDrop API client.</param>
         /// <param name="nexus">The Nexus API client.</param>
-        public ModsApiController(IWebHostEnvironment environment, IWikiCacheRepository wikiCache, IModCacheRepository modCache, IOptions<ModUpdateCheckConfig> config, IChucklefishClient chucklefish, ICurseForgeClient curseForge, IGitHubClient github, IModDropClient modDrop, INexusClient nexus)
+        /// <param name="updateManifest">The API client for arbitrary update manifest URLs.</param>
+        public ModsApiController(IWebHostEnvironment environment, IWikiCacheRepository wikiCache, IModCacheRepository modCache, IOptions<ModUpdateCheckConfig> config, IChucklefishClient chucklefish, ICurseForgeClient curseForge, IGitHubClient github, IModDropClient modDrop, INexusClient nexus, IUpdateManifestClient updateManifest)
         {
             this.ModDatabase = new ModToolkit().GetModDatabase(Path.Combine(environment.WebRootPath, "SMAPI.metadata.json"));
 
             this.WikiCache = wikiCache;
             this.ModCache = modCache;
             this.Config = config;
-            this.ModSites = new ModSiteManager(new IModSiteClient[] { chucklefish, curseForge, github, modDrop, nexus });
+            this.ModSites = new ModSiteManager(new IModSiteClient[] { chucklefish, curseForge, github, modDrop, nexus, updateManifest });
         }
 
         /// <summary>Fetch version metadata for the given mods.</summary>
@@ -145,7 +147,12 @@ namespace StardewModdingAPI.Web.Controllers
             foreach (UpdateKey updateKey in updateKeys)
             {
                 // validate update key
-                if (!updateKey.LooksValid)
+                if (
+                    !updateKey.LooksValid
+#if SMAPI_DEPRECATED
+                    || (updateKey.Site == ModSiteKey.UpdateManifest && apiVersion?.IsNewerThan("4.0.0-alpha") != true) // 4.0-alpha feature, don't make available to released mods in case it changes before release
+#endif
+                )
                 {
                     errors.Add($"The update key '{updateKey}' isn't in a valid format. It should contain the site key and mod ID like 'Nexus:541', with an optional subkey like 'Nexus:541@subkey'.");
                     continue;
@@ -162,17 +169,21 @@ namespace StardewModdingAPI.Web.Controllers
                 // if there's only a prerelease version (e.g. from GitHub), don't override the main version
                 ISemanticVersion? curMain = data.Version;
                 ISemanticVersion? curPreview = data.PreviewVersion;
+                string? curMainUrl = data.MainModPageUrl;
+                string? curPreviewUrl = data.PreviewModPageUrl;
                 if (curPreview == null && curMain?.IsPrerelease() == true)
                 {
                     curPreview = curMain;
+                    curPreviewUrl = curMainUrl;
                     curMain = null;
+                    curMainUrl = null;
                 }
 
                 // handle versions
                 if (this.IsNewer(curMain, main?.Version))
-                    main = new ModEntryVersionModel(curMain, data.Url!);
+                    main = new ModEntryVersionModel(curMain, curMainUrl ?? data.Url!);
                 if (this.IsNewer(curPreview, optional?.Version))
-                    optional = new ModEntryVersionModel(curPreview, data.Url!);
+                    optional = new ModEntryVersionModel(curPreview, curPreviewUrl ?? data.Url!);
             }
 
             // get unofficial version
@@ -295,7 +306,7 @@ namespace StardewModdingAPI.Web.Controllers
             }
 
             // get version info
-            return this.ModSites.GetPageVersions(page, updateKey.Subkey, allowNonStandardVersions, mapRemoteVersions);
+            return this.ModSites.GetPageVersions(page, updateKey, allowNonStandardVersions, mapRemoteVersions);
         }
 
         /// <summary>Get update keys based on the available mod metadata, while maintaining the precedence order.</summary>

@@ -20,6 +20,7 @@ using StardewModdingAPI.Web.Framework.Clients.GitHub;
 using StardewModdingAPI.Web.Framework.Clients.ModDrop;
 using StardewModdingAPI.Web.Framework.Clients.Nexus;
 using StardewModdingAPI.Web.Framework.Clients.Pastebin;
+using StardewModdingAPI.Web.Framework.Clients.UpdateManifest;
 using StardewModdingAPI.Web.Framework.Compression;
 using StardewModdingAPI.Web.Framework.ConfigModels;
 using StardewModdingAPI.Web.Framework.RedirectRules;
@@ -149,6 +150,8 @@ namespace StardewModdingAPI.Web
                     baseUrl: api.PastebinBaseUrl,
                     userAgent: userAgent
                 ));
+
+                services.AddSingleton<IUpdateManifestClient>(new UpdateManifestClient(userAgent: userAgent));
             }
 
             // init helpers
