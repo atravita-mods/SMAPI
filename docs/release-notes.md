@@ -10,6 +10,7 @@
 ## Upcoming release
 * For players:
   * Fixed `findstr` error in installer for some players.
+  * Removed `LargeAddressAware` flag on SMAPI (no longer needed since it's 64-bit now).
 
 * For mod authors:
   * Added support for [custom update manifests](https://stardewvalleywiki.com/Modding:Modder_Guide/APIs/Update_checks#Custom_update_manifest) (thanks to Jamie Taylor!).
