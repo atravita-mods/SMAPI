@@ -10,6 +10,7 @@
 ## Upcoming release
 * For players:
   * Fixed `findstr` error in installer for some players.
+  * Updated to [FluentHttpClient](https://github.com/Pathoschild/FluentHttpClient#readme) 4.3.0 (see [changes](https://github.com/Pathoschild/FluentHttpClient/blob/develop/RELEASE-NOTES.md#430)).
   * Removed `LargeAddressAware` flag on SMAPI (no longer needed since it's 64-bit now).
 
 * For mod authors:
