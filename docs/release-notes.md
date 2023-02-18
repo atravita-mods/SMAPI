@@ -15,6 +15,7 @@
 
 * For mod authors:
   * Added support for [custom update manifests](https://stardewvalleywiki.com/Modding:Modder_Guide/APIs/Update_checks#Custom_update_manifest) (thanks to Jamie Taylor!).
+  * Added `IsActiveForScreen()` method to `PerScreen<T>`.
 
 ## 3.18.2
 Released 09 January 2023 for Stardew Valley 1.5.6 or later.
