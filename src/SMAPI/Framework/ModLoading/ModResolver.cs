@@ -178,6 +178,7 @@ namespace StardewModdingAPI.Framework.ModLoading
             string[] lateArray = modIdsToLoadLate.ToArray();
 
             return mods
+                .Where(mod => mod.FailReason is not null)
                 .OrderBy(mod =>
                 {
                     string id = mod.Manifest.UniqueID;

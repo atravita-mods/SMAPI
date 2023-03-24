@@ -433,7 +433,7 @@ namespace StardewModdingAPI.Framework
                 // apply load order customizations
                 if (this.Settings.ModsToLoadEarly.Any() || this.Settings.ModsToLoadLate.Any())
                 {
-                    HashSet<string> installedIds = new HashSet<string>(mods.Select(p => p.Manifest.UniqueID), StringComparer.OrdinalIgnoreCase);
+                    HashSet<string> installedIds = new HashSet<string>(mods.Where(p => p.FailReason is null).Select(p => p.Manifest.UniqueID), StringComparer.OrdinalIgnoreCase);
 
                     string[] missingEarlyMods = this.Settings.ModsToLoadEarly.Where(id => !installedIds.Contains(id)).OrderBy(p => p, StringComparer.OrdinalIgnoreCase).ToArray();
                     string[] missingLateMods = this.Settings.ModsToLoadLate.Where(id => !installedIds.Contains(id)).OrderBy(p => p, StringComparer.OrdinalIgnoreCase).ToArray();
