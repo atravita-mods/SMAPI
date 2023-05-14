@@ -2,14 +2,14 @@
 
 
 
-This file contains advanced configuration for SMAPI. You generally shouldn't change this file.
-The default values are mirrored in StardewModdingAPI.Framework.Models.SConfig to log custom changes.
+This file has advanced configuration for SMAPI.
 
+Don't edit this file directly! It will be reset each time you update or reinstall SMAPI.
 
-This file is overwritten each time you update or reinstall SMAPI. To avoid losing custom settings,
-create a 'config.user.json' file in the same folder with *only* the settings you want to change.
-That file won't be overwritten, and any settings in it will override the default options. Don't
-copy all the settings, or you may cause bugs due to overridden changes in future SMAPI versions.
+Instead create a `smapi-internal/config.user.json` or `Mods/SMAPI-config.json` file with *only* the
+settings you want to change. That file won't be overwritten, and any settings in it will override
+the default options. Don't copy all the settings, or you may cause bugs due to overridden changes
+in future SMAPI versions.
 
 
 

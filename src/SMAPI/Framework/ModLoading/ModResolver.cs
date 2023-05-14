@@ -182,14 +182,14 @@ namespace StardewModdingAPI.Framework.ModLoading
                 {
                     string? id = mod.Manifest?.UniqueID;
 
-                    if (id is null)
-                        return 0;
+                    if (id is not null)
+                    {
+                        if (modIdsToLoadEarly.TryGetValue(id, out string? actualId))
+                            return -int.MaxValue + Array.IndexOf(earlyArray, actualId);
 
-                    if (modIdsToLoadEarly.TryGetValue(id, out string? actualId))
-                        return -int.MaxValue + Array.IndexOf(earlyArray, actualId);
-
-                    if (modIdsToLoadLate.TryGetValue(id, out actualId))
-                        return int.MaxValue - Array.IndexOf(lateArray, actualId);
+                        if (modIdsToLoadLate.TryGetValue(id, out actualId))
+                            return int.MaxValue - Array.IndexOf(lateArray, actualId);
+                    }
 
                     return 0;
                 })

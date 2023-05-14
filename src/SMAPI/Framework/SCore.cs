@@ -197,6 +197,8 @@ namespace StardewModdingAPI.Framework
             this.Settings = JsonConvert.DeserializeObject<SConfig>(File.ReadAllText(Constants.ApiConfigPath)) ?? throw new InvalidOperationException("The 'smapi-internal/config.json' file is missing or invalid. You can reinstall SMAPI to fix this.");
             if (File.Exists(Constants.ApiUserConfigPath))
                 JsonConvert.PopulateObject(File.ReadAllText(Constants.ApiUserConfigPath), this.Settings);
+            if (File.Exists(Constants.ApiModGroupConfigPath))
+                JsonConvert.PopulateObject(File.ReadAllText(Constants.ApiModGroupConfigPath), this.Settings);
             if (developerMode.HasValue)
                 this.Settings.OverrideDeveloperMode(developerMode.Value);
 
@@ -433,7 +435,7 @@ namespace StardewModdingAPI.Framework
                 // apply load order customizations
                 if (this.Settings.ModsToLoadEarly.Any() || this.Settings.ModsToLoadLate.Any())
                 {
-                    HashSet<string> installedIds = new HashSet<string>(mods.Where(p => p.FailReason is null).Select(p => p.Manifest.UniqueID), StringComparer.OrdinalIgnoreCase);
+                    HashSet<string> installedIds = new HashSet<string>(mods.Select(p => p.Manifest?.UniqueID).Where(p => p is not null), StringComparer.OrdinalIgnoreCase);
 
                     string[] missingEarlyMods = this.Settings.ModsToLoadEarly.Where(id => !installedIds.Contains(id)).OrderBy(p => p, StringComparer.OrdinalIgnoreCase).ToArray();
                     string[] missingLateMods = this.Settings.ModsToLoadLate.Where(id => !installedIds.Contains(id)).OrderBy(p => p, StringComparer.OrdinalIgnoreCase).ToArray();
@@ -852,6 +854,9 @@ namespace StardewModdingAPI.Framework
 
                         this.Monitor.Log(context);
 
+                        // add context to window titles
+                        this.UpdateWindowTitles();
+
                         // raise events
                         this.OnLoadStageChanged(LoadStage.Ready);
                         events.SaveLoaded.RaiseEmpty();
@@ -1203,6 +1208,7 @@ namespace StardewModdingAPI.Framework
 
                 case LoadStage.None:
                     this.JustReturnedToTitle = true;
+                    this.UpdateWindowTitles();
                     break;
 
                 case LoadStage.Loaded:
@@ -1450,15 +1456,14 @@ namespace StardewModdingAPI.Framework
             string consoleTitle = $"SMAPI {Constants.ApiVersion} - running Stardew Valley {Constants.GameVersion}";
             string gameTitle = $"Stardew Valley {Constants.GameVersion} - running SMAPI {Constants.ApiVersion}";
 
+            string suffix = "";
             if (this.ModRegistry.AreAllModsLoaded)
-            {
-                int modsLoaded = this.ModRegistry.GetAll().Count();
-                consoleTitle += $" with {modsLoaded} mods";
-                gameTitle += $" with {modsLoaded} mods";
-            }
+                suffix += $" with {this.ModRegistry.GetAll().Count()} mods";
+            if (Context.IsMultiplayer)
+                suffix += $" [{(Context.IsMainPlayer ? "main player" : "farmhand")}]";
 
-            this.Game.Window.Title = gameTitle;
-            this.LogManager.SetConsoleTitle(consoleTitle);
+            this.Game.Window.Title = gameTitle + suffix;
+            this.LogManager.SetConsoleTitle(consoleTitle + suffix);
         }
 
         /// <summary>Log a warning if software known to cause issues is installed.</summary>
