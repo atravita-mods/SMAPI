@@ -66,7 +66,7 @@ namespace StardewModdingAPI.Web.Controllers
                             ? new LogParser().Parse(file.Content)
                             : new ParsedLog { IsValid = false, Error = file.Error };
 
-                        return this.View("Index", this.GetModel(id, uploadWarning: file.Warning, expiry: file.Expiry).SetResult(log, showRaw: format == LogViewFormat.RawView));
+                        return this.View("Index", this.GetModel(id, uploadWarning: file.Warning, oldExpiry: file.OldExpiry, newExpiry: file.NewExpiry).SetResult(log, showRaw: format == LogViewFormat.RawView));
                     }
 
                 case LogViewFormat.RawDownload:
@@ -114,10 +114,11 @@ namespace StardewModdingAPI.Web.Controllers
         *********/
         /// <summary>Build a log parser model.</summary>
         /// <param name="pasteID">The stored file ID.</param>
-        /// <param name="expiry">When the uploaded file will no longer be available.</param>
+        /// <param name="oldExpiry">When the uploaded file would no longer have been available, before any renewal applied in this request</param>
+        /// <param name="newExpiry">When the file will no longer be available, after any renewal applied in this request.</param>
         /// <param name="uploadWarning">A non-blocking warning while uploading the log.</param>
         /// <param name="uploadError">An error which occurred while uploading the log.</param>
-        private LogParserModel GetModel(string? pasteID, DateTimeOffset? expiry = null, string? uploadWarning = null, string? uploadError = null)
+        private LogParserModel GetModel(string? pasteID, DateTimeOffset? oldExpiry = null, DateTimeOffset? newExpiry = null, string? uploadWarning = null, string? uploadError = null)
         {
             Platform? platform = this.DetectClientPlatform();
 
@@ -125,7 +126,8 @@ namespace StardewModdingAPI.Web.Controllers
             {
                 UploadWarning = uploadWarning,
                 UploadError = uploadError,
-                Expiry = expiry
+                OldExpiry = oldExpiry,
+                NewExpiry = newExpiry
             };
         }
 
@@ -133,24 +135,24 @@ namespace StardewModdingAPI.Web.Controllers
         /// <returns>Returns the viewer OS if known, else null.</returns>
         private Platform? DetectClientPlatform()
         {
-            string userAgent = this.Request.Headers["User-Agent"];
-            switch (userAgent)
+            string? userAgent = this.Request.Headers["User-Agent"];
+
+            if (userAgent != null)
             {
-                case string ua when ua.Contains("Windows"):
+                if (userAgent.Contains("Windows"))
                     return Platform.Windows;
 
-                case string ua when ua.Contains("Android"): // check for Android before Linux because Android user agents also contain Linux
+                if (userAgent.Contains("Android"))
                     return Platform.Android;
 
-                case string ua when ua.Contains("Linux"):
+                if (userAgent.Contains("Linux"))
                     return Platform.Linux;
 
-                case string ua when ua.Contains("Mac"):
+                if (userAgent.Contains("Mac"))
                     return Platform.Mac;
-
-                default:
-                    return null;
             }
+
+            return null;
         }
     }
 }

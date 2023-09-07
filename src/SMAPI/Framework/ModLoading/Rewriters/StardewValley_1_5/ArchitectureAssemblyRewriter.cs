@@ -1,7 +1,7 @@
 using Mono.Cecil;
 using StardewModdingAPI.Framework.ModLoading.Framework;
 
-namespace StardewModdingAPI.Framework.ModLoading.Rewriters
+namespace StardewModdingAPI.Framework.ModLoading.Rewriters.StardewValley_1_5
 {
     /// <summary>Removes the 32-bit-only from loaded assemblies.</summary>
     internal class ArchitectureAssemblyRewriter : BaseInstructionHandler

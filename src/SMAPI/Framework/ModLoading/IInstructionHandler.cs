@@ -42,5 +42,8 @@ namespace StardewModdingAPI.Framework.ModLoading
         /// <param name="instruction">The CIL instruction to handle.</param>
         /// <returns>Returns whether the instruction was changed.</returns>
         bool Handle(ModuleDefinition module, ILProcessor cil, Instruction instruction);
+
+        /// <summary>Reset the handler so it can be applied to a new module.</summary>
+        void Reset();
     }
 }

@@ -43,8 +43,11 @@ namespace StardewModdingAPI.Web.ViewModels
         /// <summary>An error which occurred while parsing the log file.</summary>
         public string? ParseError => this.ParsedLog?.Error;
 
-        /// <summary>When the uploaded file will no longer be available.</summary>
-        public DateTimeOffset? Expiry { get; set; }
+        /// <summary>When the uploaded file would no longer have been available, before any renewal applied in this request.</summary>
+        public DateTimeOffset? OldExpiry { get; set; }
+
+        /// <summary>When the file will no longer be available, after any renewal applied in this request.</summary>
+        public DateTimeOffset? NewExpiry { get; set; }
 
         /// <summary>Whether parsed log data is available.</summary>
         [MemberNotNullWhen(true, nameof(LogParserModel.PasteID), nameof(LogParserModel.ParsedLog))]
@@ -72,9 +75,10 @@ namespace StardewModdingAPI.Web.ViewModels
         /// <param name="showRaw">Whether to show the raw unparsed log.</param>
         /// <param name="uploadWarning">A non-blocking warning while uploading the log.</param>
         /// <param name="uploadError">An error which occurred while uploading the log.</param>
-        /// <param name="expiry">When the uploaded file will no longer be available.</param>
+        /// <param name="oldExpiry">When the uploaded file would no longer have been available, before any renewal applied in this request.</param>
+        /// <param name="newExpiry">When the file will no longer be available, after any renewal applied in this request.</param>
         [JsonConstructor]
-        public LogParserModel(string pasteId, Platform? detectedPlatform, ParsedLog? parsedLog, bool showRaw, string? uploadWarning, string? uploadError, DateTime? expiry)
+        public LogParserModel(string pasteId, Platform? detectedPlatform, ParsedLog? parsedLog, bool showRaw, string? uploadWarning, string? uploadError, DateTime? oldExpiry, DateTime? newExpiry)
         {
             this.PasteID = pasteId;
             this.DetectedPlatform = detectedPlatform;
@@ -82,7 +86,8 @@ namespace StardewModdingAPI.Web.ViewModels
             this.ShowRaw = showRaw;
             this.UploadWarning = uploadWarning;
             this.UploadError = uploadError;
-            this.Expiry = expiry;
+            this.OldExpiry = oldExpiry;
+            this.NewExpiry = newExpiry;
         }
 
         /// <summary>Set the log parser result.</summary>

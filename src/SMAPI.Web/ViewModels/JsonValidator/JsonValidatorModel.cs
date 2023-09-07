@@ -31,8 +31,11 @@ namespace StardewModdingAPI.Web.ViewModels.JsonValidator
         /// <summary>A non-blocking warning while uploading the file.</summary>
         public string? UploadWarning { get; set; }
 
-        /// <summary>When the uploaded file will no longer be available.</summary>
-        public DateTimeOffset? Expiry { get; set; }
+        /// <summary>When the uploaded file would no longer have been available, before any renewal applied in this request.</summary>
+        public DateTimeOffset? OldExpiry { get; set; }
+
+        /// <summary>When the file will no longer be available, after any renewal applied in this request.</summary>
+        public DateTimeOffset? NewExpiry { get; set; }
 
         /// <summary>An error which occurred while uploading the JSON.</summary>
         public string? UploadError { get; set; }
@@ -62,12 +65,13 @@ namespace StardewModdingAPI.Web.ViewModels.JsonValidator
 
         /// <summary>Set the validated content.</summary>
         /// <param name="content">The validated content.</param>
-        /// <param name="expiry">When the uploaded file will no longer be available.</param>
+        /// <param name="oldExpiry">When the uploaded file would no longer have been available, before any renewal applied in this request.</param>
+        /// <param name="newExpiry">When the file will no longer be available, after any renewal applied in this request.</param>
         /// <param name="uploadWarning">A non-blocking warning while uploading the log.</param>
-        public JsonValidatorModel SetContent(string content, DateTimeOffset? expiry, string? uploadWarning = null)
+        public JsonValidatorModel SetContent(string content, DateTimeOffset? oldExpiry, DateTimeOffset? newExpiry, string? uploadWarning = null)
         {
             this.Content = content;
-            this.Expiry = expiry;
+            this.OldExpiry = oldExpiry;
             this.UploadWarning = uploadWarning;
 
             return this;

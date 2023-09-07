@@ -19,6 +19,9 @@ namespace StardewModdingAPI.Framework.ModLoading.Framework
         /*********
         ** Public methods
         *********/
+        /****
+        ** CIL helpers
+        ****/
         /// <summary>Get the field reference from an instruction if it matches.</summary>
         /// <param name="instruction">The IL instruction.</param>
         public static FieldReference? AsFieldReference(Instruction instruction)
@@ -77,6 +80,22 @@ namespace StardewModdingAPI.Framework.ModLoading.Framework
                 Code.Brtrue_S => OpCodes.Brtrue,
                 _ => null
             };
+        }
+
+        /****
+        ** Cecil helpers
+        ****/
+        /// <summary>Get the full name for a type in the Mono.Cecil format, like <c>Netcode.NetCollection`1&lt;StardewValley.Objects.Furniture&gt;</c>.</summary>
+        /// <param name="type">The type info.</param>
+        public static string GetFullCecilName(Type type)
+        {
+            if (type.IsGenericType)
+            {
+                Type[] genericTypes = type.GetGenericArguments();
+                return $"{type.Namespace}.{type.Name}<{string.Join(",", genericTypes.Select(RewriteHelper.GetFullCecilName))}>";
+            }
+
+            return $"{type.Namespace}.{type.Name}";
         }
 
         /// <summary>Get whether a type matches a type reference.</summary>
@@ -221,6 +240,16 @@ namespace StardewModdingAPI.Framework.ModLoading.Framework
             return type
                 .GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly | BindingFlags.Public)
                 .Any(method => RewriteHelper.HasMatchingSignature(method, reference));
+        }
+
+        /****
+        ** Infrastructure helpers
+        ****/
+        /// <summary>Throw an exception indicating that a facade was constructed, which should never happen since they're only used through CIL rewrites.</summary>
+        /// <exception cref="InvalidOperationException">An exception indicating the constructor was called incorrectly.</exception>
+        public static void ThrowFakeConstructorCalled()
+        {
+            throw new InvalidOperationException("This constructor is only intended for the compiler and should never be called at runtime.");
         }
     }
 }

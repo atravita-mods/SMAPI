@@ -33,7 +33,7 @@ namespace StardewModdingAPI.Web.Controllers
         };
 
         /// <summary>The schema ID to use if none was specified.</summary>
-        private string DefaultSchemaID = "none";
+        private readonly string DefaultSchemaID = "none";
 
         /// <summary>A token in an error message which indicates that the child errors should be displayed instead.</summary>
         private readonly string TransparentToken = "$transparent";
@@ -82,7 +82,7 @@ namespace StardewModdingAPI.Web.Controllers
             StoredFileInfo file = await this.Storage.GetAsync(id!, renew);
             if (string.IsNullOrWhiteSpace(file.Content))
                 return this.View("Index", result.SetUploadError("The JSON file seems to be empty."));
-            result.SetContent(file.Content, expiry: file.Expiry, uploadWarning: file.Warning);
+            result.SetContent(file.Content, oldExpiry: file.OldExpiry, newExpiry: file.NewExpiry, uploadWarning: file.Warning);
 
             // skip parsing if we're going to the edit screen
             if (isEditView)
@@ -108,7 +108,7 @@ namespace StardewModdingAPI.Web.Controllers
 
                 // format JSON
                 string formatted = parsed.ToString(Formatting.Indented);
-                result.SetContent(formatted, expiry: file.Expiry, uploadWarning: file.Warning);
+                result.SetContent(formatted, oldExpiry: file.OldExpiry, newExpiry: file.NewExpiry, uploadWarning: file.Warning);
                 parsed = JToken.Parse(formatted); // update line number references
             }
 
@@ -158,7 +158,7 @@ namespace StardewModdingAPI.Web.Controllers
             // upload file
             UploadResult result = await this.Storage.SaveAsync(input);
             if (!result.Succeeded)
-                return this.View("Index", this.GetModel(result.ID, schemaName, isEditView: true).SetContent(input, null).SetUploadError(result.UploadError));
+                return this.View("Index", this.GetModel(result.ID, schemaName, isEditView: true).SetContent(input, null, null).SetUploadError(result.UploadError));
 
             // redirect to view
             return this.Redirect(this.Url.PlainAction("Index", "JsonValidator", new { schemaName, id = result.ID })!);

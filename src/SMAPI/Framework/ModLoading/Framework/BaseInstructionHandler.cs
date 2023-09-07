@@ -42,6 +42,13 @@ namespace StardewModdingAPI.Framework.ModLoading.Framework
             return false;
         }
 
+        /// <inheritdoc />
+        public virtual void Reset()
+        {
+            this.Flags.Clear();
+            this.Phrases.Clear();
+        }
+
 
         /*********
         ** Protected methods

@@ -3,14 +3,13 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Framework.ModLoading;
 using StardewModdingAPI.Framework.ModLoading.Finders;
-using StardewModdingAPI.Framework.ModLoading.RewriteFacades;
 using StardewModdingAPI.Framework.ModLoading.Rewriters;
+using StardewModdingAPI.Framework.ModLoading.Rewriters.StardewValley_1_5;
 using StardewValley;
-using StardewValley.Locations;
 
 namespace StardewModdingAPI.Metadata
 {
-    /// <summary>Provides CIL instruction handlers which rewrite mods for compatibility and throw exceptions for incompatible code.</summary>
+    /// <summary>Provides CIL instruction handlers which rewrite mods for compatibility, and detect low-level mod issues like incompatible code.</summary>
     internal class InstructionMetadata
     {
         /*********
@@ -26,9 +25,8 @@ namespace StardewModdingAPI.Metadata
         *********/
         /// <summary>Get rewriters which detect or fix incompatible CIL instructions in mod assemblies.</summary>
         /// <param name="paranoidMode">Whether to detect paranoid mode issues.</param>
-        /// <param name="platformChanged">Whether the assembly was rewritten for crossplatform compatibility.</param>
         /// <param name="rewriteMods">Whether to get handlers which rewrite mods for compatibility.</param>
-        public IEnumerable<IInstructionHandler> GetHandlers(bool paranoidMode, bool platformChanged, bool rewriteMods)
+        public IEnumerable<IInstructionHandler> GetHandlers(bool paranoidMode, bool rewriteMods)
         {
             /****
             ** rewrite CIL to fix incompatible code
@@ -36,19 +34,21 @@ namespace StardewModdingAPI.Metadata
             // rewrite for crossplatform compatibility
             if (rewriteMods)
             {
-                // rewrite for Stardew Valley 1.5
-                yield return new FieldReplaceRewriter()
-                    .AddField(typeof(DecoratableLocation), "furniture", typeof(GameLocation), nameof(GameLocation.furniture))
-                    .AddField(typeof(Farm), "resourceClumps", typeof(GameLocation), nameof(GameLocation.resourceClumps))
-                    .AddField(typeof(MineShaft), "resourceClumps", typeof(GameLocation), nameof(GameLocation.resourceClumps));
-
                 // heuristic rewrites
                 yield return new HeuristicFieldRewriter(this.ValidateReferencesToAssemblies);
                 yield return new HeuristicMethodRewriter(this.ValidateReferencesToAssemblies);
 
-                // rewrite for Stardew Valley 1.5.5
-                if (platformChanged)
-                    yield return new MethodParentRewriter(typeof(SpriteBatch), typeof(SpriteBatchFacade));
+                // specific versions
+                yield return new ReplaceReferencesRewriter()
+                    // Stardew Valley 1.5 (fields moved)
+                    .MapField("Netcode.NetCollection`1<StardewValley.Objects.Furniture> StardewValley.Locations.DecoratableLocation::furniture", typeof(GameLocation), nameof(GameLocation.furniture))
+                    .MapField("Netcode.NetCollection`1<StardewValley.TerrainFeatures.ResourceClump> StardewValley.Farm::resourceClumps", typeof(GameLocation), nameof(GameLocation.resourceClumps))
+                    .MapField("Netcode.NetCollection`1<StardewValley.TerrainFeatures.ResourceClump> StardewValley.Locations.MineShaft::resourceClumps", typeof(GameLocation), nameof(GameLocation.resourceClumps))
+
+                    // Stardew Valley 1.5.5 (XNA => MonoGame method changes)
+                    .MapFacade<SpriteBatch, SpriteBatchFacade>();
+
+                // 32-bit to 64-bit in Stardew Valley 1.5.5
                 yield return new ArchitectureAssemblyRewriter();
 
                 // detect Harmony & rewrite for SMAPI 3.12 (Harmony 1.x => 2.0 update)
@@ -65,23 +65,21 @@ namespace StardewModdingAPI.Metadata
             /****
             ** detect mod issues
             ****/
-            // detect broken code
+            // broken code
             yield return new ReferenceToMissingMemberFinder(this.ValidateReferencesToAssemblies);
             yield return new ReferenceToMemberWithUnexpectedTypeFinder(this.ValidateReferencesToAssemblies);
 
-            /****
-            ** detect code which may impact game stability
-            ****/
+            // code which may impact game stability
             yield return new FieldFinder(typeof(SaveGame).FullName!, new[] { nameof(SaveGame.serializer), nameof(SaveGame.farmerSerializer), nameof(SaveGame.locationSerializer) }, InstructionHandleResult.DetectedSaveSerializer);
             yield return new EventFinder(typeof(ISpecializedEvents).FullName!, new[] { nameof(ISpecializedEvents.UnvalidatedUpdateTicked), nameof(ISpecializedEvents.UnvalidatedUpdateTicking) }, InstructionHandleResult.DetectedUnvalidatedUpdateTick);
 
-            /****
-            ** detect paranoid issues
-            ****/
+            // paranoid issues
             if (paranoidMode)
             {
-                // filesystem access
+                // direct console access
                 yield return new TypeFinder(typeof(System.Console).FullName!, InstructionHandleResult.DetectedConsoleAccess);
+
+                // filesystem access
                 yield return new TypeFinder(
                     new[]
                     {

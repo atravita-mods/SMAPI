@@ -1,11 +1,11 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using HarmonyLib;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using StardewModdingAPI.Framework.ModLoading.Framework;
-using StardewModdingAPI.Framework.ModLoading.RewriteFacades;
 
-namespace StardewModdingAPI.Framework.ModLoading.Rewriters
+namespace StardewModdingAPI.Framework.ModLoading.Rewriters.StardewValley_1_5
 {
     /// <summary>Detects Harmony references, and rewrites Harmony 1.x assembly references to work with Harmony 2.x.</summary>
     internal class HarmonyRewriter : BaseInstructionHandler
@@ -52,6 +52,7 @@ namespace StardewModdingAPI.Framework.ModLoading.Rewriters
         }
 
         /// <inheritdoc />
+        [SuppressMessage("ReSharper", "StringLiteralTypo", Justification = SuppressReasons.MatchesOriginal)]
         public override bool Handle(ModuleDefinition module, ILProcessor cil, Instruction instruction)
         {
             if (this.ShouldRewrite)
@@ -77,6 +78,14 @@ namespace StardewModdingAPI.Framework.ModLoading.Rewriters
             }
 
             return false;
+        }
+
+        /// <inheritdoc />
+        public override void Reset()
+        {
+            base.Reset();
+
+            this.ReplacedTypes = false;
         }
 
 

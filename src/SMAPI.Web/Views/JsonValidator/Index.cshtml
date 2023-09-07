@@ -5,7 +5,7 @@
 
 @{
     // get view data
-    string curPageUrl = this.Url.PlainAction("Index", "JsonValidator", new { schemaName = Model!.SchemaName, id = Model.PasteID }, absoluteUrl: true)!;
+    string curPageUrl = this.Url.PlainAction("Index", "JsonValidator", new { schemaName = Model.SchemaName, id = Model.PasteID }, absoluteUrl: true)!;
     string newUploadUrl = this.Url.PlainAction("Index", "JsonValidator", new { schemaName = Model.SchemaName })!;
     string? schemaDisplayName = null;
     bool isValidSchema = Model.SchemaName != null && Model.SchemaFormats.TryGetValue(Model.SchemaName, out schemaDisplayName) && schemaDisplayName.ToLower() != "none";
@@ -71,12 +71,24 @@ else if (!Model.IsEditView && Model.PasteID != null)
 }
 
 @* save warnings *@
-@if (Model.UploadWarning != null || Model.Expiry != null)
+@if (Model.UploadWarning != null || Model.NewExpiry.HasValue)
 {
     <div class="save-metadata" v-pre>
-        @if (Model.Expiry != null)
+        @if (Model.NewExpiry != null)
         {
-            <text>This JSON file will expire in @((DateTime.UtcNow - Model.Expiry.Value).Humanize()) (<a href="@(this.Url.PlainAction("Index", "JsonValidator", new { schemaName = this.Model.SchemaName, id = this.Model.PasteID, operation = "renew" }))">renew</a>).</text>
+            string? oldExpiryText = Model.OldExpiry.HasValue
+                ? (DateTime.UtcNow - Model.OldExpiry.Value).Humanize()
+                : null;
+            string? newExpiryText = Model.NewExpiry.HasValue
+                ? (DateTime.UtcNow - Model.NewExpiry.Value).Humanize()
+                : null;
+
+            <text>This JSON file will expire in </text>
+            @if (oldExpiryText != null && oldExpiryText != newExpiryText)
+            {
+                <text><s>@(oldExpiryText)</s> </text>
+            }
+            <text>@(newExpiryText) (<a href="@(this.Url.PlainAction("Index", "JsonValidator", new { schemaName = this.Model.SchemaName, id = this.Model.PasteID, operation = "renew" }))">renew</a>).</text>
         }
         <!--@Model.UploadWarning-->
     </div>

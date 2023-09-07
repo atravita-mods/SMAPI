@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 
 namespace StardewModdingAPI.Web.Framework.Storage
@@ -13,7 +14,7 @@ namespace StardewModdingAPI.Web.Framework.Storage
 
         /// <summary>Fetch raw text from storage.</summary>
         /// <param name="id">The storage ID returned by <see cref="SaveAsync"/>.</param>
-        /// <param name="renew">Whether to reset the file expiry.</param>
-        Task<StoredFileInfo> GetAsync(string id, bool renew);
+        /// <param name="forceRenew">Whether to reset the file expiry.</param>
+        Task<StoredFileInfo> GetAsync(string id, bool forceRenew);
     }
 }

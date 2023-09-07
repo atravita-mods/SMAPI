@@ -8,19 +8,54 @@
 -->
 
 ## Upcoming release
+* For the web UI:
+  * Fixed uploaded log/JSON file expiry alway shown as renewed.
+
+## 3.18.5
+Released 26 August 2023 for Stardew Valley 1.5.6 or later.
+
 * For players:
-  * Added support for overriding SMAPI configuration per `Mods` folder (thanks to Shockah!).
+  * Reduced startup time when many mods are rewritten for compatibility.
+  * Fixed app icon on Linux/macOS, and for some players on Windows (thanks to Datrio!).
+  * Fixed error if you copy a null field into `config.user.json`.
+  * Fixed installer creating a "null" file in its folder.
+  * Fixed installer moving bundled mods back to their default location on update. It now correctly updates their existing folder instead.
+
+* For mod authors:
+  * Updated dependencies, including [Mono.Cecil](https://github.com/jbevain/cecil) 0.11.4 → 0.11.5 (see [changes](https://github.com/jbevain/cecil/releases/tag/0.11.5)).
+  * Fixed NPC warp cache not updated when a map edit changes door warps (thanks to atravita!).
+
+* For the web UI:
+  * Viewing an uploaded log/JSON file within 15 days of expiry now auto-renews it, to allow for discussions that last longer than the default 30-day expiry.
+  * Fixed log parser's summary skipping mods if some have no description.
+  * Fixed log parser no longer ignoring Error Handler in newer SMAPI-on-Android versions (thanks to AnotherPillow!).
+
+* For SMAPI developers:
+  * Overhauled compatibility rewriters.  
+    _This allows simpler, more robust, and more flexible crossplatform rewrites (e.g. on Android) and prepares for the upcoming Stardew Valley 1.6. See remarks on the new `ReplaceReferencesRewriter` for more info._
+
+## 3.18.4
+Released 24 June 2023 for Stardew Valley 1.5.6 or later.
+
+* For players:
   * In multiplayer, the game/SMAPI window titles now show whether you're the main player or a farmhand.
+  * The `test_input` console command now logs input until the command is run again (instead of for 30 seconds).
   * Fixed logged SMAPI errors not having line numbers on Linux/macOS.
+  * Fixed wezterm terminal support on Linux/macoS (thanks to romangraef!).
   * Fixed install error if a game folder has an invalid symlink.
 
 * For mod authors:
-  * Added support for [custom update manifests](https://stardewvalleywiki.com/Modding:Modder_Guide/APIs/Update_checks#Custom_update_manifest) (thanks to Jamie Taylor!).
+  * Added `--no-prompt` installer command-line argument for automated tools (thanks to NyCodeGHG!).
+  * Added clearer error message when a map tilesheet has no image source (thanks to atravita!).
   * Fixed `Context.HasRemotePlayers` being true when there's no farmhands connected.
-  * Fixed error loading a mod if it sets `"MinimumApiVersion": null` explicitly.
+  * Fixed error loading a mod if it explicitly sets `"MinimumApiVersion": null`.
+  * Updated Newtonsoft.Json 13.0.2 → 13.0.3 (see [changes](https://github.com/JamesNK/Newtonsoft.Json/releases/tag/13.0.3)) and Pintail 2.2.2 → 2.3.0 (see [changes](https://github.com/Nanoray-pl/Pintail/blob/master/docs/release-notes.md#230)).
 
 * For SMAPI toolkit users:
   * Fixed `ModFolder` not being JSON-serializable.
+
+* For the web API:
+  * Fixed manifest schema format for the `examples` field (thanks to boneskull!).
 
 ## 3.18.3
 Released 09 April 2023 for Stardew Valley 1.5.6 or later.

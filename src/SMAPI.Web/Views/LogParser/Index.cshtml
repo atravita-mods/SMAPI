@@ -9,13 +9,14 @@
     ViewData["Title"] = "SMAPI log parser";
 
     // get log info
-    ParsedLog? log = Model!.ParsedLog;
+    ParsedLog? log = Model.ParsedLog;
     IDictionary<string, LogModInfo[]> contentPacks = Model.GetContentPacksByMod();
     ISet<int> screenIds = new HashSet<int>(log?.Messages.Select(p => p.ScreenId) ?? Array.Empty<int>());
 
     // detect suggested fixes
     LogModInfo[] outdatedMods = log?.Mods.Where(mod => mod.HasUpdate).ToArray() ?? Array.Empty<LogModInfo>();
     LogModInfo? errorHandler = log?.Mods.FirstOrDefault(p => p.IsCodeMod && p.Name == "Error Handler");
+    bool missingErrorHandler = errorHandler is null && log?.OperatingSystem?.Contains("Android Unix", StringComparison.OrdinalIgnoreCase) != true;
     bool hasOlderErrorHandler = errorHandler?.GetParsedVersion() is not null && log?.ApiVersionParsed is not null && log.ApiVersionParsed.IsNewerThan(errorHandler.GetParsedVersion());
     bool isPyTkCompatibilityMode = log?.ApiVersionParsed?.IsOlderThan("3.15.0") is false && log.Mods.Any(p => p.IsCodeMod && p.Name == "PyTK" && p.GetParsedVersion()?.IsOlderThan("1.24.0") is true);
 
@@ -143,7 +144,7 @@ else if (log?.IsValid == true)
 }
 
 @* save warnings *@
-@if (Model.UploadWarning != null || Model.Expiry != null)
+@if (Model.UploadWarning != null || Model.NewExpiry.HasValue)
 {
     @if (Model.UploadWarning != null)
     {
@@ -151,9 +152,21 @@ else if (log?.IsValid == true)
     }
 
     <div class="save-metadata" v-pre>
-        @if (Model.Expiry != null)
+        @if (Model.NewExpiry.HasValue)
         {
-            <text>This log will expire in @((DateTime.UtcNow - Model.Expiry.Value).Humanize()) (<a href="@(this.Url.PlainAction("Index", "LogParser", new { id = this.Model.PasteID, renew = true }))">renew</a>).</text>
+            string? oldExpiryText = Model.OldExpiry.HasValue
+                ? (DateTime.UtcNow - Model.OldExpiry.Value).Humanize()
+                : null;
+            string? newExpiryText = Model.NewExpiry.HasValue
+                ? (DateTime.UtcNow - Model.NewExpiry.Value).Humanize()
+                : null;
+
+            <text>This log will expire in </text>
+            @if (oldExpiryText != null && oldExpiryText != newExpiryText)
+            {
+                <text><s>@(oldExpiryText)</s> </text>
+            }
+            <text>@(newExpiryText) (<a href="@(this.Url.PlainAction("Index", "LogParser", new { id = this.Model.PasteID, renew = true }))">renew</a>).</text>
         }
     </div>
 }
@@ -244,11 +257,11 @@ else if (log?.IsValid == true)
 @if (log?.IsValid == true)
 {
     <div id="output">
-        @if (outdatedMods.Any() || errorHandler is null || hasOlderErrorHandler || isPyTkCompatibilityMode || log.IsStrictMode)
+        @if (outdatedMods.Any() || missingErrorHandler || hasOlderErrorHandler || isPyTkCompatibilityMode || log.IsStrictMode)
         {
             <h2>Suggested fixes</h2>
             <ul id="fix-list">
-                @if (errorHandler is null && log.ApiVersionParsed?.IsNewerThan("3.8.4") is true)
+                @if (missingErrorHandler)
                 {
                     <li class="important">You don't have the <strong>Error Handler</strong> mod installed. This automatically prevents many game or mod errors. You can <a href="https://stardewvalleywiki.com/Modding:Player_Guide#Install_SMAPI">reinstall SMAPI</a> to re-add it.</li>
                 }

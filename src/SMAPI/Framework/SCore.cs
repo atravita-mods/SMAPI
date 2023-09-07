@@ -193,15 +193,18 @@ namespace StardewModdingAPI.Framework
             this.PurgeNormalLogs();
             string logPath = this.GetLogPath();
 
-            // init basics
-            this.Settings = JsonConvert.DeserializeObject<SConfig>(File.ReadAllText(Constants.ApiConfigPath)) ?? throw new InvalidOperationException("The 'smapi-internal/config.json' file is missing or invalid. You can reinstall SMAPI to fix this.");
-            if (File.Exists(Constants.ApiUserConfigPath))
-                JsonConvert.PopulateObject(File.ReadAllText(Constants.ApiUserConfigPath), this.Settings);
-            if (File.Exists(Constants.ApiModGroupConfigPath))
-                JsonConvert.PopulateObject(File.ReadAllText(Constants.ApiModGroupConfigPath), this.Settings);
-            if (developerMode.HasValue)
-                this.Settings.OverrideDeveloperMode(developerMode.Value);
+            // init settings
+            {
+                var deserializerSettings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
 
+                this.Settings = JsonConvert.DeserializeObject<SConfig>(File.ReadAllText(Constants.ApiConfigPath)) ?? throw new InvalidOperationException("The 'smapi-internal/config.json' file is missing or invalid. You can reinstall SMAPI to fix this.");
+                if (File.Exists(Constants.ApiUserConfigPath))
+                    JsonConvert.PopulateObject(File.ReadAllText(Constants.ApiUserConfigPath), this.Settings, deserializerSettings);
+                if (developerMode.HasValue)
+                    this.Settings.OverrideDeveloperMode(developerMode.Value);
+            }
+
+            // init basics
             this.LogManager = new LogManager(logPath: logPath, colorConfig: this.Settings.ConsoleColors, writeToConsole: writeToConsole, verboseLogging: this.Settings.VerboseLogging, isDeveloperMode: this.Settings.DeveloperMode, getScreenIdForLog: this.GetScreenIdForLog);
             this.CommandManager = new CommandManager(this.Monitor);
             this.EventManager = new EventManager(this.ModRegistry);

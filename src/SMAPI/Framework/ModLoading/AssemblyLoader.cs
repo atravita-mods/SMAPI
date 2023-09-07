@@ -44,6 +44,9 @@ namespace StardewModdingAPI.Framework.ModLoading
         /// <summary>The objects to dispose as part of this instance.</summary>
         private readonly HashSet<IDisposable> Disposables = new();
 
+        /// <summary>The instruction finders and rewriters to apply.</summary>
+        private readonly IInstructionHandler[] InstructionHandlers;
+
         /// <summary>Whether to rewrite mods for compatibility.</summary>
         private readonly bool RewriteMods;
 
@@ -81,6 +84,10 @@ namespace StardewModdingAPI.Framework.ModLoading
                     this.TypeAssemblies[type.FullName] = assembly;
                 }
             }
+
+            // init rewriters
+            this.InstructionHandlers = new InstructionMetadata().GetHandlers(this.ParanoidMode, this.RewriteMods).ToArray();
+
         }
 
         /// <summary>Preprocess and load an assembly.</summary>
@@ -376,8 +383,12 @@ namespace StardewModdingAPI.Framework.ModLoading
                 }
             }
 
+            // reset instruction handlers
+            IInstructionHandler[] handlers = this.InstructionHandlers;
+            foreach (IInstructionHandler handler in handlers)
+                handler.Reset();
+
             // find or rewrite code
-            IInstructionHandler[] handlers = new InstructionMetadata().GetHandlers(this.ParanoidMode, platformChanged, this.RewriteMods).ToArray();
             RecursiveRewriter rewriter = new(
                 module: module,
                 rewriteModule: curModule =>

@@ -31,8 +31,11 @@ namespace StardewModdingAPI.Web.Framework.Storage
         /// <summary>Whether Azure blob storage is configured.</summary>
         private bool HasAzure => !string.IsNullOrWhiteSpace(this.ClientsConfig.AzureBlobConnectionString);
 
-        /// <summary>The number of days since the blob's last-modified date when it will be deleted.</summary>
+        /// <inheritdoc cref="ApiClientsConfig.AzureBlobTempExpiryDays"/>
         private int ExpiryDays => this.ClientsConfig.AzureBlobTempExpiryDays;
+
+        /// <inheritdoc cref="ApiClientsConfig.AzureBlobTempExpiryAutoRenewalDays"/>
+        private int AutoRenewalDays => this.ClientsConfig.AzureBlobTempExpiryAutoRenewalDays;
 
 
         /*********
@@ -83,7 +86,7 @@ namespace StardewModdingAPI.Web.Framework.Storage
         }
 
         /// <inheritdoc />
-        public async Task<StoredFileInfo> GetAsync(string id, bool renew)
+        public async Task<StoredFileInfo> GetAsync(string id, bool forceRenew)
         {
             // fetch from blob storage
             if (Guid.TryParseExact(id, "N", out Guid _))
@@ -96,19 +99,23 @@ namespace StardewModdingAPI.Web.Framework.Storage
                         // get client
                         BlobClient blob = this.GetAzureBlobClient(id);
 
-                        // extend expiry
-                        if (renew)
-                            await blob.SetMetadataAsync(new Dictionary<string, string> { ["expiryRenewed"] = DateTime.UtcNow.ToString("O") }); // change the blob's last-modified date (the specific property set doesn't matter)
-
                         // fetch file
                         Response<BlobDownloadInfo> response = await blob.DownloadAsync();
                         using BlobDownloadInfo result = response.Value;
                         using StreamReader reader = new(result.Content);
-                        DateTimeOffset expiry = result.Details.LastModified + TimeSpan.FromDays(this.ExpiryDays);
-                        string content = this.GzipHelper.DecompressString(reader.ReadToEnd());
+                        DateTimeOffset oldExpiry = this.GetExpiry(result.Details.LastModified);
+                        string content = this.GzipHelper.DecompressString(await reader.ReadToEndAsync());
+
+                        // extend expiry if needed
+                        DateTimeOffset newExpiry = oldExpiry;
+                        if (forceRenew || this.IsWithinAutoRenewalWindow(result.Details.LastModified))
+                        {
+                            await blob.SetMetadataAsync(new Dictionary<string, string> { ["expiryRenewed"] = DateTime.UtcNow.ToString("O") }); // change the blob's last-modified date (the specific property set doesn't matter)
+                            newExpiry = this.GetExpiry(DateTimeOffset.UtcNow);
+                        }
 
                         // build model
-                        return new StoredFileInfo(content, expiry);
+                        return new StoredFileInfo(content, oldExpiry, newExpiry);
                     }
                     catch (RequestFailedException ex)
                     {
@@ -133,7 +140,7 @@ namespace StardewModdingAPI.Web.Framework.Storage
                     }
 
                     // renew
-                    if (renew)
+                    if (forceRenew)
                     {
                         File.SetLastWriteTimeUtc(file.FullName, DateTime.UtcNow);
                         file.Refresh();
@@ -141,8 +148,9 @@ namespace StardewModdingAPI.Web.Framework.Storage
 
                     // build model
                     return new StoredFileInfo(
-                        content: File.ReadAllText(file.FullName),
-                        expiry: DateTime.UtcNow.AddDays(this.ExpiryDays),
+                        content: await File.ReadAllTextAsync(file.FullName),
+                        oldExpiry: null,
+                        newExpiry: DateTime.UtcNow.AddDays(this.ExpiryDays),
                         warning: "This file was saved temporarily to the local computer. This should only happen in a local development environment."
                     );
                 }
@@ -153,8 +161,22 @@ namespace StardewModdingAPI.Web.Framework.Storage
             {
                 PasteInfo response = await this.Pastebin.GetAsync(id);
                 response.Content = this.GzipHelper.DecompressString(response.Content);
-                return new StoredFileInfo(response.Content, null, error: response.Error);
+                return new StoredFileInfo(response.Content, null, null, error: response.Error);
             }
+        }
+
+        /// <summary>Get the date when an uploaded file will expire.</summary>
+        /// <param name="lastModified">The date when the file was uploaded or last renewed.</param>
+        private DateTimeOffset GetExpiry(DateTimeOffset lastModified)
+        {
+            return lastModified + TimeSpan.FromDays(this.ExpiryDays);
+        }
+
+        /// <summary>Get whether a blob's expiry should be reset based on its last access date.</summary>
+        /// <param name="lastModified">The date when the file was uploaded or last renewed.</param>
+        private bool IsWithinAutoRenewalWindow(DateTimeOffset lastModified)
+        {
+            return lastModified + TimeSpan.FromDays(this.AutoRenewalDays) >= DateTimeOffset.UtcNow;
         }
 
         /// <summary>Get a client for reading and writing to Azure Blob storage.</summary>

@@ -156,7 +156,7 @@ namespace StardewModdingAPI.Web.Framework.LogParsing
                             string version = match.Groups["version"].Value;
                             string author = match.Groups["author"].Value;
                             string description = match.Groups["description"].Value;
-                            string forMod = match.Groups["for"].Value;
+                            string forMod = match.Groups["for"].Value.Trim(); // if there's no mod description, trim newline from ID
 
                             if (!mods.TryGetValue(name, out List<LogModInfo>? entries))
                                 mods[name] = entries = new List<LogModInfo>();

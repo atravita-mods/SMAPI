@@ -25,6 +25,9 @@ namespace StardewModdingAPI.Web.Framework.ConfigModels
         /// <summary>The number of days since the blob's last-modified date when it will be deleted.</summary>
         public int AzureBlobTempExpiryDays { get; set; }
 
+        /// <summary>The number of days before expiry within which blob expiry dates should be auto-renewed on access.</summary>
+        public int AzureBlobTempExpiryAutoRenewalDays { get; set; }
+
 
         /****
         ** Chucklefish
