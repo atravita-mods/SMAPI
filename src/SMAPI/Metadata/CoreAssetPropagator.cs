@@ -395,6 +395,18 @@ namespace StardewModdingAPI.Metadata
                     Game1.birdsSpriteSheet = content.Load<Texture2D>(key);
                     return true;
 
+                case "loosesprites/chatbox": // ChatBox constructor
+                    if (Game1.chatBox?.chatBox != null)
+                    {
+                        Texture2D texture = content.Load<Texture2D>(key);
+
+                        this.Reflection.GetField<Texture2D>(Game1.chatBox.chatBox, "_textBoxTexture").SetValue(texture);
+                        this.Reflection.GetField<Texture2D>(Game1.chatBox.emojiMenu, "chatBoxTexture").SetValue(texture);
+
+                        return true;
+                    }
+                    return false;
+
                 case "loosesprites/concessions": // Game1.LoadContent
                     Game1.concessionsSpriteSheet = content.Load<Texture2D>(key);
                     return true;
@@ -422,6 +434,18 @@ namespace StardewModdingAPI.Metadata
                 case "loosesprites/daybg": // Game1.LoadContent
                     Game1.daybg = content.Load<Texture2D>(key);
                     return true;
+
+                case "loosesprites/emojis": // ChatBox constructor
+                    if (Game1.chatBox != null)
+                    {
+                        Texture2D texture = content.Load<Texture2D>(key);
+
+                        this.Reflection.GetField<Texture2D>(Game1.chatBox.emojiMenu, "emojiTexture").SetValue(texture);
+                        Game1.chatBox.emojiMenuIcon.texture = texture;
+
+                        return true;
+                    }
+                    return false;
 
                 case "loosesprites/font_bold": // Game1.LoadContent
                     SpriteText.spriteTexture = content.Load<Texture2D>(key);

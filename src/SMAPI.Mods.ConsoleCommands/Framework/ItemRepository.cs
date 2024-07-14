@@ -171,21 +171,31 @@ namespace StardewModdingAPI.Mods.ConsoleCommands.Framework
                         else if (ShouldGet(ItemType.Object))
                         {
                             // spawn main item
-                            SObject? item = null;
-                            yield return this.TryCreate(ItemType.Object, id, p =>
+                            SearchableItem? mainItem = this.TryCreate(ItemType.Object, id, p =>
                             {
-                                return item = (p.ID == 812 // roe
-                                    ? new ColoredObject(p.ID, 1, Color.White)
-                                    : new SObject(p.ID, 1)
-                                );
+                                // roe
+                                if (p.ID == 812)
+                                    return new ColoredObject(p.ID, 1, Color.White);
+
+                                // Wild Honey
+                                if (p.ID == 340)
+                                {
+                                    return new SObject(Vector2.Zero, 340, "Wild Honey", false, true, false, false)
+                                    {
+                                        Name = "Wild Honey",
+                                        preservedParentSheetIndex = { -1 }
+                                    };
+                                }
+
+                                // else plain item
+                                return new SObject(p.ID, 1);
                             });
-                            if (item == null)
-                                continue;
+                            yield return mainItem;
 
                             // flavored items
-                            if (includeVariants)
+                            if (includeVariants && mainItem?.Item != null)
                             {
-                                foreach (SearchableItem? variant in this.GetFlavoredObjectVariants(item))
+                                foreach (SearchableItem? variant in this.GetFlavoredObjectVariants((SObject)mainItem.Item))
                                     yield return variant;
                             }
                         }
@@ -355,6 +365,18 @@ namespace StardewModdingAPI.Mods.ConsoleCommands.Framework
                         }
                     }
                     break;
+            }
+
+            // ginger => pickled ginger
+            if (id == 829 && item.Category != SObject.VegetableCategory)
+            {
+                yield return this.TryCreate(ItemType.Object, this.CustomIDOffset * 5 + id, _ => new SObject(342, 1)
+                {
+                    Name = $"Pickled {item.Name}",
+                    Price = 50 + item.Price * 2,
+                    preserve = { SObject.PreserveType.Pickle },
+                    preservedParentSheetIndex = { id }
+                });
             }
         }
 
