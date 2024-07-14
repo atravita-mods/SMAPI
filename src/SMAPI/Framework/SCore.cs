@@ -87,6 +87,11 @@ namespace StardewModdingAPI.Framework
         /// <summary>The mod toolkit used for generic mod interactions.</summary>
         private readonly ModToolkit Toolkit = new();
 
+        /// <summary>
+        /// Used to encapsulate loading translations.
+        /// </summary>
+        internal TranslationsLoader ModTranslationsLoader { get; private set; }
+
         /****
         ** Higher-level components
         ****/
@@ -202,6 +207,7 @@ namespace StardewModdingAPI.Framework
             }
 
             // init basics
+            this.ModTranslationsLoader = new(this.Toolkit);
             this.LogManager = new LogManager(logPath: logPath, colorConfig: this.Settings.ConsoleColors, writeToConsole: writeToConsole, verboseLogging: this.Settings.VerboseLogging, isDeveloperMode: this.Settings.DeveloperMode, getScreenIdForLog: this.GetScreenIdForLog);
             this.CommandManager = new CommandManager(this.Monitor);
             this.EventManager = new EventManager(this.ModRegistry);
@@ -2100,7 +2106,7 @@ namespace StardewModdingAPI.Framework
             // add content pack
             IFileLookup fileLookup = this.GetFileLookup(packDirPath);
             ContentPack contentPack = new(packDirPath, packManifest, packContentHelper, packTranslationHelper, this.Toolkit.JsonHelper, fileLookup);
-            this.ReloadTranslationsForTemporaryContentPack(parentMod, contentPack);
+            this.ModTranslationsLoader.ReloadTranslationsForTemporaryContentPack(parentMod, contentPack);
             parentMod.FakeContentPacks.Add(new WeakReference<ContentPack>(contentPack));
 
             // log change
@@ -2160,13 +2166,12 @@ namespace StardewModdingAPI.Framework
             this.ReloadTranslations(this.ModRegistry.GetAll());
         }
 
-        /// <summary>Reload translations for the given mods.</summary>
-        /// <param name="mods">The mods for which to reload translations.</param>
+        // Loads translations for SMAPI and mods.
         private void ReloadTranslations(IEnumerable<IModMetadata> mods)
         {
             // core SMAPI translations
             {
-                var translations = this.ReadTranslationFiles(Path.Combine(Constants.InternalFilesPath, "i18n"), out IList<string> errors);
+                var translations = this.ModTranslationsLoader.ReadTranslationFiles(Path.Combine(Constants.InternalFilesPath, "i18n"), out IList<string> errors);
                 if (errors.Any() || !translations.Any())
                 {
                     this.Monitor.Log("SMAPI couldn't load some core translations. You may need to reinstall SMAPI.", LogLevel.Warn);
@@ -2177,95 +2182,9 @@ namespace StardewModdingAPI.Framework
             }
 
             // mod translations
-            foreach (IModMetadata metadata in mods)
             {
-                // top-level mod
-                {
-                    var translations = this.ReadTranslationFiles(Path.Combine(metadata.DirectoryPath, "i18n"), out IList<string> errors);
-                    if (errors.Any())
-                    {
-                        metadata.LogAsMod("Mod couldn't load some translation files:", LogLevel.Warn);
-                        foreach (string error in errors)
-                            metadata.LogAsMod($"  - {error}", LogLevel.Warn);
-                    }
-
-                    metadata.Translations!.SetTranslations(translations);
-                }
-
-                // fake content packs
-                foreach (ContentPack pack in metadata.GetFakeContentPacks())
-                    this.ReloadTranslationsForTemporaryContentPack(metadata, pack);
+                this.ModTranslationsLoader.ReloadTranslations(mods);
             }
-        }
-
-        /// <summary>Load or reload translations for a temporary content pack created by a mod.</summary>
-        /// <param name="parentMod">The parent mod which created the content pack.</param>
-        /// <param name="contentPack">The content pack instance.</param>
-        private void ReloadTranslationsForTemporaryContentPack(IModMetadata parentMod, ContentPack contentPack)
-        {
-            var translations = this.ReadTranslationFiles(Path.Combine(contentPack.DirectoryPath, "i18n"), out IList<string> errors);
-            if (errors.Any())
-            {
-                parentMod.LogAsMod($"Generated content pack at '{PathUtilities.GetRelativePath(Constants.ModsPath, contentPack.DirectoryPath)}' couldn't load some translation files:", LogLevel.Warn);
-                foreach (string error in errors)
-                    parentMod.LogAsMod($"  - {error}", LogLevel.Warn);
-            }
-
-            contentPack.TranslationImpl.SetTranslations(translations);
-        }
-
-        /// <summary>Read translations from a directory containing JSON translation files.</summary>
-        /// <param name="folderPath">The folder path to search.</param>
-        /// <param name="errors">The errors indicating why translation files couldn't be parsed, indexed by translation filename.</param>
-        private IDictionary<string, IDictionary<string, string>> ReadTranslationFiles(string folderPath, out IList<string> errors)
-        {
-            JsonHelper jsonHelper = this.Toolkit.JsonHelper;
-
-            // read translation files
-            var translations = new Dictionary<string, IDictionary<string, string>>();
-            errors = new List<string>();
-            DirectoryInfo translationsDir = new(folderPath);
-            if (translationsDir.Exists)
-            {
-                foreach (FileInfo file in translationsDir.EnumerateFiles("*.json"))
-                {
-                    string locale = Path.GetFileNameWithoutExtension(file.Name.ToLower().Trim());
-                    try
-                    {
-                        if (!jsonHelper.ReadJsonFileIfExists(file.FullName, out IDictionary<string, string>? data))
-                        {
-                            errors.Add($"{file.Name} file couldn't be read"); // mainly happens when the file is corrupted or empty
-                            continue;
-                        }
-
-                        translations[locale] = data;
-                    }
-                    catch (Exception ex)
-                    {
-                        errors.Add($"{file.Name} file couldn't be parsed: {ex.GetLogSummary()}");
-                    }
-                }
-            }
-
-            // validate translations
-            foreach (string locale in translations.Keys.ToArray())
-            {
-                // handle duplicates
-                HashSet<string> keys = new(StringComparer.OrdinalIgnoreCase);
-                HashSet<string> duplicateKeys = new(StringComparer.OrdinalIgnoreCase);
-                foreach (string key in translations[locale].Keys.ToArray())
-                {
-                    if (!keys.Add(key))
-                    {
-                        duplicateKeys.Add(key);
-                        translations[locale].Remove(key);
-                    }
-                }
-                if (duplicateKeys.Any())
-                    errors.Add($"{locale}.json has duplicate translation keys: [{string.Join(", ", duplicateKeys)}]. Keys are case-insensitive.");
-            }
-
-            return translations;
         }
 
         /// <summary>Get a file lookup for the given directory.</summary>

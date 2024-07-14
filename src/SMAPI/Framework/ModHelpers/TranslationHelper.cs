@@ -76,5 +76,12 @@ namespace StardewModdingAPI.Framework.ModHelpers
         {
             this.Translator.SetLocale(locale, localeEnum);
         }
+
+        /// <inheritdoc />
+        public void Reload()
+        {
+            SCore.Instance.ModTranslationsLoader.ReloadModTranslation(this.Mod);
+
+        }
     }
 }

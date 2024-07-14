@@ -35,5 +35,10 @@ namespace StardewModdingAPI
         /// <param name="key">The translation key.</param>
         /// <param name="withFallback">Whether to add duplicate translations for locale fallback. For example, if a translation is defined in <c>default.json</c> but not <c>fr.json</c>, setting this to true will add a <c>fr</c> entry which duplicates the default text.</param>
         IDictionary<string, Translation> GetInAllLocales(string key, bool withFallback = false);
+
+        /// <summary>
+        /// Reloads this mod's translations.
+        /// </summary> // note that this might be expensive?
+        void Reload();
     }
 }
